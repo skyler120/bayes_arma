@@ -253,20 +253,38 @@ gen_series <- function(pp,qq){
   return(valid_series)
 }
 
+############### Bayesian ARMA Model Order Determination ###############
 
-bayes_arima <- function(x,y){
+bayes_arima <- function(x,y, p, q){
+  if(p+q>0){
+    init = rnorm(p+q+1)
+    res = optim(init, logf_neg)
+    params = res$par
+    hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
+    return(f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2))
+
+  }
+  return(-Inf)
+}
+
+############### Run Simulations ###############
+
+rp = 2
+rq = 1
+vs = gen_series(rp,rq)
+vs = vs[1:25]
+results <- vector("list", length(vs))
+for(i in 1:length(vs)){
   ev = matrix(-Inf,5+1,5+1)
+  print(i)
+  x = vs[[i]]$series
+  y = vs[[i]]$forc
+  #run our algorithm
   for(p in 0:5){
     for(q in 0:5){
-      if(p+q>0){
-        init = rnorm(p+q+1)
-        res = optim(init, logf_neg)
-        params = res$par
-        hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
-        ev[p+1,q+1] = f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2)
-        if(is.nan(ev[p+1, q+1])){
-          ev[p+1, q+1] = -Inf
-        }
+      ev[p+1,q+1] = bayes_arima(x,y,p,q)
+      if(is.nan(ev[p+1, q+1])){
+        ev[p+1, q+1] = -Inf
       }
     }
   }
@@ -274,23 +292,8 @@ bayes_arima <- function(x,y){
   bp = m[1,1] - 1
   bq = m[1,2] - 1
   
-  return(c(bp,bq))
-}
-
-
-rp = 2
-rq = 1
-vs = gen_series(rp,rq)
-vs = vs[1:25]
-results3 <- vector("list", length(vs))
-for(i in 1:length(vs)){
-  print(i)
-  x = vs[[i]]$series
-  y = vs[[i]]$forc
-  #run our algorithm
-  arma_orders = bayes_arima(x,y)
-  arma_fits = fitted_acc(x,y,arma_orders[1],arma_orders[2],rp,rq)
+  arma_fits = fitted_acc(x,y,bp, bq, rp,rq)
   ap = arma_fits[1]
   aq = arma_fits[2]
-  results3[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
+  results[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
 }
