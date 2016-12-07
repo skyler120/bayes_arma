@@ -269,19 +269,19 @@ bayes_arima <- function(x,y, p, q){
 
 ############### Run Simulations ###############
 
-rp = 2
-rq = 1
+rp = 8
+rq = 6
 vs = gen_series(rp,rq)
-vs = vs[1:25]
-results <- vector("list", length(vs))
+vs = vs[1:10]
+results3 <- vector("list", length(vs))
 for(i in 1:length(vs)){
-  ev = matrix(-Inf,5+1,5+1)
+  ev = matrix(-Inf,10+1,10+1)
   print(i)
   x = vs[[i]]$series
   y = vs[[i]]$forc
   #run our algorithm
-  for(p in 0:5){
-    for(q in 0:5){
+  for(p in 0:10){
+    for(q in 0:10){
       ev[p+1,q+1] = bayes_arima(x,y,p,q)
       if(is.nan(ev[p+1, q+1])){
         ev[p+1, q+1] = -Inf
@@ -295,5 +295,5 @@ for(i in 1:length(vs)){
   arma_fits = fitted_acc(x,y,bp, bq, rp,rq)
   ap = arma_fits[1]
   aq = arma_fits[2]
-  results[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
+  results3[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
 }
