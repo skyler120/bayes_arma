@@ -297,3 +297,6 @@ for(i in 1:length(vs)){
   aq = arma_fits[2]
   results3[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
 }
+
+
+
