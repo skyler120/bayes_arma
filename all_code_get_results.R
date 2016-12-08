@@ -194,10 +194,10 @@ logf_neg = function(params){
 
 ############### Compute Accuracy ###############
 
-fitted_acc <- function(x, y, p, q, rp, rq){
-  arima_x1 = auto.arima(x, d=0, max.p=10, max.q = 10, allowmean = F)
-  barima_x1 = arima(x, order=c(p,0,q), include.mean=F)
-  tarima_x1 = arima(x, order=c(rp,0,rq), include.mean=F)
+fitted_acc <- function(x, y, bp, bq, rp, rq){
+  arima_x1 = auto.arima(x, d=0, max.p=5, max.q = 5, allowmean = F, approximation = F)
+  barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+  tarima_x1 = arima(x, order=c(rp,0,rq), include.mean=F, method="ML")
   a = max(arima_x1$residuals)
   b = max(barima_x1$residuals)
   
@@ -278,7 +278,7 @@ for(i in 1:length(vs)){
   ev = matrix(-Inf,10+1,10+1)
   print(i)
   x = vs[[i]]$series
-  y = vs[[i]]$forc
+  y = vs[[i]]$forc[1:5]
   #run our algorithm
   for(p in 0:10){
     for(q in 0:10){
