@@ -195,7 +195,7 @@ logf_neg = function(params){
 ############### Compute Accuracy ###############
 
 fitted_acc <- function(x, y, bp, bq, rp, rq){
-  arima_x1 = auto.arima(x, d=0, max.p=5, max.q = 5, allowmean = F, approximation = F)
+  arima_x1 = auto.arima(x, d=0, max.p=10, max.q = 10, allowmean = F, approximation = F)
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
   tarima_x1 = arima(x, order=c(rp,0,rq), include.mean=F, method="ML")
   a = max(arima_x1$residuals)
@@ -257,7 +257,7 @@ gen_series <- function(pp,qq){
 
 bayes_arima <- function(x,y, p, q){
   if(p+q>0){
-    init = rnorm(p+q+1)
+    init = rep(0,p+q+1)
     res = optim(init, logf_neg)
     params = res$par
     hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
@@ -269,16 +269,16 @@ bayes_arima <- function(x,y, p, q){
 
 ############### Run Simulations ###############
 
-rp = 8
-rq = 6
+rp = 2
+rq = 1
 vs = gen_series(rp,rq)
-vs = vs[1:10]
-results3 <- vector("list", length(vs))
+vs = vs[1:1]
+results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
   ev = matrix(-Inf,10+1,10+1)
   print(i)
   x = vs[[i]]$series
-  y = vs[[i]]$forc[1:5]
+  y = vs[[i]]$forc[1:10]
   #run our algorithm
   for(p in 0:10){
     for(q in 0:10){
@@ -295,7 +295,7 @@ for(i in 1:length(vs)){
   arma_fits = fitted_acc(x,y,bp, bq, rp,rq)
   ap = arma_fits[1]
   aq = arma_fits[2]
-  results3[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
+  results55[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
 }
 
 

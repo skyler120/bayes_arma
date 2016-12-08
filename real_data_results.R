@@ -1,6 +1,6 @@
 sp500 = read.csv("quarterly-sp-500-index-19001996.csv")
 dat = sp500$Quarterly.S.P.500.index..1900.1996
-train_split = floor(0.75*length(dat))
+train_split = floor(0.95*length(dat))
 x = dat[1:train_split] 
 mx = mean(x)
 x = x - mx
@@ -21,6 +21,8 @@ arma_fits = real_fitted_acc(x,y,bp,bq,mx)
 ap = arma_fits[1]
 aq = arma_fits[2]
 acc_sp500 = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
+barima_sp500 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+plot_resids(barima_sp500$residuals)
 
 fin = read.csv("financial-times-index-leading-eq.csv")
 dat = fin$Financial.Times.index.leading.equity.prices..quarterly..1960...1971
@@ -45,6 +47,8 @@ arma_fits = real_fitted_acc(x,y,bp,bq,mx)
 ap = arma_fits[1]
 aq = arma_fits[2]
 acc_fin = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
+barima_fin = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+plot_resids(barima_fin$residuals)
 
 eq = read.csv("number-of-earthquakes-per-year-m.csv")
 dat = eq$Number.of.earthquakes.per.year.magnitude.7.0.or.greater..1900.1998
@@ -69,7 +73,8 @@ arma_fits = real_fitted_acc(x,y,bp,bq,mx)
 ap = arma_fits[1]
 aq = arma_fits[2]
 acc_eq = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
-
+barima_eq = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+plot_resids(barima_eq$residuals)
 
 ############### Real Fitted Accuracy #########################
 real_fitted_acc <- function(x, y, bp, bq, mx){
@@ -77,7 +82,7 @@ real_fitted_acc <- function(x, y, bp, bq, mx){
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
   a = max(arima_x1$residuals)
   b = max(barima_x1$residuals)
-  
+  y = na.omit(y)
   if(a>b){
     lines(1:length(x),x - arima_x1$residuals, col="blue")
     plot(1:length(x), x , col="black", type='l')

@@ -6,37 +6,79 @@ ALLA = c()
 ALLB = c()
 rmsea = c()
 rmseb = c()
-for(i in 1:length(results3)){
-  ARA = c(ARA,results3[[i]][1])
-  ARB = c(ARB,results3[[i]][2])
-  MAA = c(MAA,results3[[i]][3])
-  MAB = c(MAB,results3[[i]][4])
-  ALLA = c(ALLA,results3[[i]][5])
-  ALLB = c(ALLB,results3[[i]][6])
-  rmsea = c(rmsea,results3[[i]][7])
-  rmseb = c(rmseb,results3[[i]][8])
+rmset = c()
+trmsea = c()
+trmseb = c()
+trmset = c()
+sum_stats = rep(0,16)
+
+
+for(i in 1:length(results)){
+  ARA = c(ARA,results[[i]][1])
+  ARB = c(ARB,results[[i]][2])
+  MAA = c(MAA,results[[i]][3])
+  MAB = c(MAB,results[[i]][4])
+  ALLA = c(ALLA,results[[i]][5])
+  ALLB = c(ALLB,results[[i]][6])
+  rmsea = c(rmsea,results[[i]][7])
+  rmseb = c(rmseb,results[[i]][8])
+  rmset = c(rmset,results[[i]][9])
+  trmsea = c(trmsea,results[[i]][10])
+  trmseb = c(trmseb,results[[i]][11])
+  trmset = c(trmset,results[[i]][12]) 
 }
-rmsea
-mean(rmsea - rmseb) #-0.00135 0.1199275
-mean(c(rmsea[1:3], rmsea[5:length(rmsea)]) - c(rmseb[1:3], rmseb[5:length(rmseb)])) #0.15, 0.01413537
-sum((rmsea-rmseb)>0) #13 6 11
-
-sum((ARA>0)) #24 13 25
-sum((ARA<0)) #1 2 0 
-sum((MAA>0)) #17 10 24
-sum((MAA<0)) #3 3 0
-
-sum((ARB>0)) #20 9 25
-sum((ARB<0)) #0 3 0 
-sum((MAB>0)) #16 11 25
-sum((MAB<0)) #4 2 0
 
 
+sum_stats[1] = sum((ARA>0)) #under ar
+sum_stats[2] = sum((ARA<0)) #over ar
+sum_stats[3] =sum((ARA==0)) #correct ar
+sum_stats[4] =sum((MAA>0)) #under ma
+sum_stats[5] =sum((MAA<0)) #over ma
+sum_stats[6] =sum((MAA==0)) #correct ma 
 
-#hist(rmsea - rmseb, breaks = seq(-2,5,by=1),xlab = "RMSE auto.arima - RMSE Bayesian", main = "RMSE of auto.arima - RMSE of Bayesian ARMA for ARMA(5,3)")
-df = data.frame(rmsea-rmseb)
-ggplot(data = df, aes(df$rmsea...rmseb), col=I("blue")) + geom_histogram()
-qplot(df$rmsea...rmseb, binwidth=0.25, main = "Histogram of RMSE of auto.arima - RMSE of ABARMA", xlab = "Difference in RMSE", fill = I("blue"),col=I("black"))
+sum_stats[7] = sum((ARB>0)) #under ar
+sum_stats[8] = sum((ARB<0)) # over ar
+sum_stats[9] = sum((ARB==0))#correct ar
+sum_stats[10] = sum((MAB>0)) #under ma
+sum_stats[11] = sum((MAB<0)) #over ma
+sum_stats[12] =sum((MAB==0))#correct ma
+
+sum_stats[13] = mean(rmset - rmsea)
+sum_stats[14] = mean(rmset - rmseb)
+sum_stats[15] = mean(trmset - trmsea)
+sum_stats[16] = mean(trmset - trmseb)
+
+
+#df = data.frame(rmset-rmsea)
+#ggplot(data = df, aes(df$rmset...rmsea), col=I("blue")) + geom_histogram()
+#qplot(df$rmset...rmsea, binwidth=0.1, main = "Histogram of Model Fit Error", xlab = "RMSE of True Model - RMSE of auto.arima", fill = I("blue"),col=I("black"))
+
+#df = data.frame(rmset-rmseb)
+#ggplot(data = df, aes(df$rmset...rmseb), col=I("blue")) + geom_histogram()
+#qplot(df$rmset...rmseb, binwidth=0.1, main = "Histogram of Model Fit Error", xlab = "RMSE of True Model - RMSE of ABARMA Model", fill = I("blue"),col=I("black"))
+
+#df = data.frame(trmset-trmsea)
+#ggplot(data = df, aes(df$trmset...trmsea), col=I("blue")) + geom_histogram()
+#qplot(df$trmset...trmsea, binwidth=0.1, main = "Histogram of Forecast Error", xlab = "RMSE of True Model - RMSE of auto.arima", fill = I("blue"),col=I("black"))
+
+#df = data.frame(trmset-trmseb)
+#ggplot(data = df, aes(df$trmset...trmseb), col=I("blue")) + geom_histogram()
+#qplot(df$trmset...trmseb, binwidth=0.1, main = "Histogram of Forecast Error", xlab = "RMSE of True Model - RMSE of ABARMA Model", fill = I("blue"),col=I("black"))
+
+
+methods = c(rep("Model Fit Error - auto.arima", length(ARA)), rep("Model Fit Error - ABARMA", length(ARB)))
+differences = c(rmset - rmsea, rmset - rmseb)
+d = data.frame(methods, differences)
+
+p = ggplot(d, aes(differences, fill = methods)) + geom_histogram(binwidth=0.01,position = 'identity', alpha = .3) 
+p + labs(title = "Model Fit Error of ABARMA and auto.arima")
+
+methods = c(rep("Forecast Error - auto.arima", length(ARA)), rep("Forecast Error - ABARMA", length(ARB)))
+differences = c(trmset - trmsea, trmset - trmseb)
+d = data.frame(methods, differences)
+
+p = ggplot(d, aes(differences, fill = methods)) + geom_histogram(binwidth=0.01,position = 'identity', alpha = .3) 
+p + labs(title = "Forecast Error of ABARMA and auto.arima")
 
 methods = c(rep("auto.arima", length(ARA)), rep("ABARMA", length(ARB)))
 differences = c(ARA, ARB)
