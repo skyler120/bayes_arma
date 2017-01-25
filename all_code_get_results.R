@@ -232,32 +232,72 @@ fitted_acc <- function(x, y, bp, bq, rp, rq){
 
 ############### Generate Sample Data ###############
 
-gen_arm <- function(pp,qq){
+gen_arm <- function(samp, noise, pp, qq){
+  set.seed(150)
+  train = floor(0.8*samp)
   if((pp+qq)>0){
     phis = runif(pp,-1,1)
     pis = runif(qq,-1,1)
-    x = arima.sim(n = 225, list(ar = phis, ma = pis), sd = runif(1,0,1))
-    return(list(series=x[1:200],forc = x[201:125], p = pp, q = qq))
+    x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = runif(1,0,1))
+    return(list(series=x[1:train],forc = x[train+1:samp], p = pp, q = qq))
   }
 }
 
-gen_series <- function(pp,qq){
-  res <- vector("list", 3000)
-  for(i in 1:3000){
-    res[[i]] = try(gen_arm(pp,qq))
+gen_series <- function(num_series, pp,qq){
+  i = 1
+  sampl = 100
+  nois = runif(1,0,1)
+  res <- vector("list", num_series)
+  while(i<=num_series){
+    res[[i]] = try(gen_arm(sampl, nois, pp, qq))
     if (typeof(res[[i]])=="character"){
       res[[i]]  = NULL
     }
+    else{
+      i <- i+1
+    }
   }
-  valid_series = Filter(Negate(is.null), res)
-  return(valid_series)
+  return(res)
 }
+
+gen_var_samp_series <- function(samps, pp,qq){
+  i = 1
+  nois = runif(1,0,1)
+  res <- vector("list", length(samps))
+  while(i<=length(samps)){
+    res[[i]] = try(gen_arm(samps[i], nois, pp, qq))
+    if (typeof(res[[i]])=="character"){
+      res[[i]]  = NULL
+    }
+    else{
+      i <- i+1
+    }
+  }
+  return(res)
+}
+
+gen_var_noise_series <- function(noises, pp,qq){
+  i = 1
+  samp = 200
+  res <- vector("list", length(noises))
+  while(i<=length(noises)){
+    res[[i]] = try(gen_arm(samp, noises[i], pp, qq))
+    if (typeof(res[[i]])=="character"){
+      res[[i]]  = NULL
+    }
+    else{
+      i <- i+1
+    }
+  }
+  return(res)
+}
+
 
 ############### Bayesian ARMA Model Order Determination ###############
 
-bayes_arima <- function(x,y, p, q){
+bayes_arima <- function(x,y, p, q, init){
   if(p+q>0){
-    init = rep(0,p+q+1)
+    #init = rep(0,p+q+1)
     res = optim(init, logf_neg)
     params = res$par
     hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
@@ -343,40 +383,5 @@ hcubature(f=f2, lowerLimit=c(-10,rep(-1,p+q)), upperLimit=c(10,rep(1,p+q)),
           maxEval = 0, absError = 0, doChecking = FALSE,
           vectorInterface = FALSE, norm = 'L2')
 
-############### Run Simulations ###############
 
-rp = 2
-rq = 1
-vs = gen_series(rp,rq)
 
-# saving vs, do for each rp and rq
-saveRDS(vs,file='') # change file name!!!
-
-vs = vs[1:1]
-results55 <- vector("list", length(vs))
-for(i in 1:length(vs)){
-  ev = matrix(-Inf,10+1,10+1)
-  print(i)
-  x = vs[[i]]$series
-  y = vs[[i]]$forc[1:10]
-  #run our algorithm
-  for(p in 0:10){
-    for(q in 0:10){
-      ev[p+1,q+1] = bayes_arima(x,y,p,q)
-      if(is.nan(ev[p+1, q+1])){
-        ev[p+1, q+1] = -Inf
-      }
-    }
-  }
-  m = which(ev == max(ev), arr.ind = TRUE)
-  bp = m[1,1] - 1
-  bq = m[1,2] - 1
-  
-  arma_fits = fitted_acc(x,y,bp, bq, rp,rq)
-  ap = arma_fits[1]
-  aq = arma_fits[2]
-  results55[[i]] = c(rp-ap, rp-bp, rq-aq, rq-bq, rp + rq - (ap + aq), rp + rq - (bp+bq), arma_fits[3:length(arma_fits)])
-}
-
-# saving results55, do for each rp and rq
-saveRDS(results55,file='') # change file name!!!
