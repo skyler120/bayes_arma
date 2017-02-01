@@ -222,9 +222,9 @@ fitted_acc <- function(x, y, bp, bq, rp, rq){
   fbx = forecast(barima_x1, h=length(y))
   ftx = forecast(tarima_x1, h=length(y))
   
-  trmse_auto_x  = sqrt(sum((y-fax$mean)^2  ) / length(x))
-  trmse_bayes_x  = sqrt(sum((y-fbx$mean)^2  ) / length(x))
-  trmse_true_x  = sqrt(sum((y-ftx$mean)^2  ) / length(x))
+  trmse_auto_x  = sqrt(sum((y-fax$mean)^2  ) / length(y))
+  trmse_bayes_x  = sqrt(sum((y-fbx$mean)^2  ) / length(y))
+  trmse_true_x  = sqrt(sum((y-ftx$mean)^2  ) / length(y))
   
   
   return(c(arima_x1$arma[1], arima_x1$arma[2], rmse_auto_x, rmse_bayes_x, rmse_true_x, trmse_auto_x, trmse_bayes_x, trmse_true_x))
