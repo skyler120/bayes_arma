@@ -9,7 +9,7 @@ phiphi = function(k,r){
       }
       else{
         phiipre = phimat[i,j-1]
-        phiki = phimat[j-i,j-i]
+        phiki = phimat[j-i,j-1]
         phimat[j,i] = phiipre - tanh(r[j])*phiki
       }
     }
@@ -43,6 +43,28 @@ muts <- function(phir,pis){
 }
 
 
+muts_bpbq <- function(phir,pis){
+  poq = max(length(phir), length(pis))
+  mus = rep(0,poq)
+  xapp = c(rep(0,poq), x)
+  for(t in (poq+1):(poq+length(x))){
+    if(bp==0){
+      p1 = 0
+    }
+    else{
+      p1 = sum(phir*rev(xapp[(t-bp):(t-1)]))
+    }
+    if(bq==0){
+      p2 = 0
+    }
+    else{
+      p2 = sum(pis*(rev(xapp[(t-bq):(t-1)]) - mus[(t-bq):(t-1)]))
+    }
+    mus = c(mus, p1-p2)
+  }
+  return(mus)
+}
+
 #############################  Function for logp ###############################################
 
 logp <- function(params){
@@ -67,6 +89,27 @@ logp <- function(params){
   return(-1*(n+2)/2*tsigsq - 1/2*exp(-tsigsq)*val)
 }
 
+logp_bpbq <- function(params){
+  n = length(x)
+  poq = max(bp,bq)
+  phir = 0
+  pis = 0
+  tsigsq = params[1]
+  if(bp>0){
+    phir = phiphi(bp,params[2:(1+bp)])
+    if(bq>0){
+      pis = phiphi(bq,params[(2+bp):length(params)])
+    }
+  }else if(bq>0){
+    pis = phiphi(bq,params[(2+bp):length(params)])
+  }else{
+    phir = 0
+    pis = 0
+  }
+  mut = muts_bpbq(phir,pis)
+  val = sum((x-mut[(poq+1):length(mut)])^2)
+  return(-1*(n+2)/2*tsigsq - 1/2*exp(-tsigsq)*val)
+}
 
 ############### This is where the Hessians are computed ###############
 
@@ -137,16 +180,17 @@ f = function(params){
   # J_phir
   if (p>=2){
     Jphir = prod((1-tanh(params[2:(1+p)])^2)^floor(((1:p)-1)/2), 1-tanh(params[1+2*(1:floor(p/2))]))
-  }else if (p==1){
-    Jphir = prod((1-tanh(params[2:(1+p)])^2)^floor(((1:p)-1)/2))
+  #}else if (p==1){
+    #Jphir = prod((1-tanh(params[2:(1+p)])^2)^floor(((1:p)-1)/2))
+    #Jphir = 1
   }else{
     Jphir = 1
   }
   # J_pis
   if (q>=2){
     Jpis = prod((1-tanh(params[(2+p):(1+p+q)])^2)^floor(((1:q)-1)/2), 1-tanh(params[1+p+2*(1:floor(q/2))]))
-  }else if (q==1){
-    Jpis = prod((1-tanh(params[(2+p):(1+p+q)])^2)^floor(((1:q)-1)/2))
+  #}else if (q==1){
+    #Jpis = prod((1-tanh(params[(2+p):(1+p+q)])^2)^floor(((1:q)-1)/2))
   }else{
     Jpis = 1
   }
@@ -163,29 +207,29 @@ logf_neg = function(params){
   if (p>0){
     Jr = sum(log(1-tanh(params[2:(1+p)])^2))
   }else{
-    Jr = 1
+    Jr = 0
   }
   # J_s
   if (q>0){
     Js = sum(log(1-tanh(params[(2+p):(1+p+q)])^2))
   }else{
-    Js = 1
+    Js = 0
   }
   # J_phir
   if (p>=2){
     Jphir = prod((1-tanh(params[2:(1+p)])^2)^floor(((1:p)-1)/2), 1-tanh(params[1+2*(1:floor(p/2))]))
-  }else if (p==1){
-    Jphir = prod((1-tanh(params[2:(1+p)])^2)^floor(((1:p)-1)/2))
+  #}else if (p==1){
+    #Jphir = prod((1-tanh(params[2:(1+p)])^2)^floor(((1:p)-1)/2))
   }else{
-    Jphir = 1
+    Jphir = 0
   }
   # J_pis
   if (q>=2){
     Jpis = sum(log((1-tanh(params[(2+p):(1+p+q)])^2)^floor(((1:q)-1)/2)), log(1-tanh(params[1+p+2*(1:floor(q/2))])))
-  }else if (q==1){
-    Jpis = sum(log((1-tanh(params[(2+p):(1+p+q)])^2)^floor(((1:q)-1)/2)))
+  #}else if (q==1){
+    #Jpis = sum(log((1-tanh(params[(2+p):(1+p+q)])^2)^floor(((1:q)-1)/2)))
   }else{
-    Jpis = 1
+    Jpis = 0
   }
   # J_sigma
   Jsigma = params[1]
@@ -195,7 +239,7 @@ logf_neg = function(params){
 ############### Compute Accuracy ###############
 
 fitted_acc <- function(x, y, bp, bq, rp, rq){
-  arima_x1 = auto.arima(x, d=0, max.p=10, max.q = 10, allowmean = F, approximation = F)
+  arima_x1 = auto.arima(x, d=0, max.p=10, max.q = 10, allowmean = F, approximation = F, stepwise = F)
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
   tarima_x1 = arima(x, order=c(rp,0,rq), include.mean=F, method="ML")
   a = max(arima_x1$residuals)
@@ -232,24 +276,22 @@ fitted_acc <- function(x, y, bp, bq, rp, rq){
 
 ############### Generate Sample Data ###############
 
-gen_arm <- function(samp, noise, pp, qq){
+gen_arm <- function(samp, pp, qq, noise_level){
   set.seed(150)
   train = floor(0.8*samp)
   if((pp+qq)>0){
     phis = runif(pp,-1,1)
     pis = runif(qq,-1,1)
-    x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = runif(1,0,1))
+    x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = runif(1,0,noise_level))
     return(list(series=x[1:train],forc = x[train+1:samp], p = pp, q = qq))
   }
 }
 
-gen_series <- function(num_series, pp,qq){
+gen_series <- function(num_series, sampl, noise_level, pp,qq){
   i = 1
-  sampl = 100
-  nois = runif(1,0,1)
   res <- vector("list", num_series)
   while(i<=num_series){
-    res[[i]] = try(gen_arm(sampl, nois, pp, qq))
+    res[[i]] = try(gen_arm(sampl, pp, qq, noise_level))
     if (typeof(res[[i]])=="character"){
       res[[i]]  = NULL
     }
@@ -260,34 +302,22 @@ gen_series <- function(num_series, pp,qq){
   return(res)
 }
 
-gen_var_samp_series <- function(samps, pp,qq){
+gen_var_samp_series <- function(num_series, samps,pp,qq){
   i = 1
-  nois = runif(1,0,1)
+  noise_level = 1
   res <- vector("list", length(samps))
-  while(i<=length(samps)){
-    res[[i]] = try(gen_arm(samps[i], nois, pp, qq))
-    if (typeof(res[[i]])=="character"){
-      res[[i]]  = NULL
-    }
-    else{
-      i <- i+1
-    }
+  for(i in 1:length(samps)){
+    res[[i]] = gen_series(num_series, samps[i], noise_level, pp,qq)
   }
   return(res)
 }
 
-gen_var_noise_series <- function(noises, pp,qq){
+gen_var_noise_series <- function(num_series, noises, pp,qq){
   i = 1
   samp = 200
   res <- vector("list", length(noises))
-  while(i<=length(noises)){
-    res[[i]] = try(gen_arm(samp, noises[i], pp, qq))
-    if (typeof(res[[i]])=="character"){
-      res[[i]]  = NULL
-    }
-    else{
-      i <- i+1
-    }
+  for(i in 1:length(noises)){
+    res[[i]] = try(gen_series(num_series, samp, noises[i], pp, qq))
   }
   return(res)
 }
@@ -301,87 +331,44 @@ bayes_arima <- function(x,y, p, q, init){
     res = optim(init, logf_neg)
     params = res$par
     hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
-    return(f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2))
-
+    return(list(transformed_params = res$par, pdm = f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2)))
   }
-  return(-Inf)
+  return(list(transformed_params = NULL, pdm =  -Inf))
 }
 
-############### Order Determination through Numerical Integration ###############
-# (still Bayes formulation)
 
-# create function where there is no reparametrization from hypercubes to R
-
-phiphi2 = function(k,r){
-  phimat = matrix(0,k,k)
-  for(j in 1:k){
-    for(i in 1:j){
-      if(i==j){
-        phimat[j,i] =r[j]
-      }
-      else{
-        phiipre = phimat[i,j-1]
-        phiki = phimat[j-i,j-i]
-        phimat[j,i] = phiipre - r[j]*phiki
-      }
+############### Find untransformed coeffs ###############
+r_to_phi <- function(r){
+  k = length(r)
+  phi = numeric(k)
+  phiprev = numeric(k) 
+  for(i in 1:k){
+    phi[i] = r[i]
+    if(i>1){
+      phi[1:(i-1)] = phiprev[1:(i-1)] - r[i]*phiprev[(i-1):1]
     }
+    phiprev = phi
   }
-  return(phimat[k,])
+  return(phi)
 }
 
-logp2 <- function(params){
-  n = length(x)
-  poq = max(p,q)
-  phir = 0
-  pis = 0
-  tsigsq = params[1]
-  if(p>0){
-    phir = phiphi2(p,params[2:(1+p)])
-    if(q>0){
-      pis = phiphi2(q,params[(2+p):length(params)])
-    }
-  }else if(q>0){
-    pis = phiphi2(q,params[(2+p):length(params)])
-  }else{
-    phir = 0
-    pis = 0
-  }
-  mut = muts(phir,pis)
-  val = sum((x-mut[(poq+1):length(mut)])^2)
-  return(-1*(n+2)/2*tsigsq - 1/2*exp(-tsigsq)*val)
+get_coeffs<- function(transformed_params, bp, bq){
+  params = numeric(length(transformed_params))
+  params[1] = exp(transformed_params[1])
+  params[2:(bp+1)] = r_to_phi(tanh(transformed_params[2:(bp+1)]))
+  params[(bp+2):length(transformed_params)] = r_to_phi(tanh(transformed_params[(bp+2):length(transformed_params)]))
+  return(params)
 }
 
-# integrand function
-f2 = function(params){
-  # p(D,theta*|M), off by a constant 
-  pfunc = exp(logp2(params))
-  # J_phir
-  if (p>=2){
-    Jphir = prod((1-params[2:(1+p)]^2)^floor(((1:p)-1)/2), 1-params[1+2*(1:floor(p/2))])
-  }else if (p==1){
-    Jphir = prod((1-params[2:(1+p)]^2)^floor(((1:p)-1)/2))
-  }else{
-    Jphir = 1
-  }
-  # J_pis
-  if (q>=2){
-    Jpis = prod((1-params[(2+p):(1+p+q)]^2)^floor(((1:q)-1)/2), 1-params[1+p+2*(1:floor(q/2))])
-  }else if (q==1){
-    Jpis = prod((1-params[(2+p):(1+p+q)]^2)^floor(((1:q)-1)/2))
-  }else{
-    Jpis = 1
-  }
-  # J_sigma
-  Jsigma = exp(params[1])
-  return(pfunc*Jphir*Jpis*Jsigma)
-}
-
-require(cubature)
-
-hcubature(f=f2, lowerLimit=c(-10,rep(-1,p+q)), upperLimit=c(10,rep(1,p+q)), 
-          tol = 1e-05, fDim = 1,
-          maxEval = 0, absError = 0, doChecking = FALSE,
-          vectorInterface = FALSE, norm = 'L2')
-
+############### Find Coeffs of phis and pis ###############
+# joint_data_model_coeffs <- function(params){
+#   params[1] = log(params[1])
+#   return(exp(logp_bpbq(params)))
+# }
+# 
+# find_coeffs <- function(init_params, bp, bq){
+#   res = optim(init_params, joint_data_model_coeffs, method = "L-BFGS-B", lower = c(0, rep(-Inf,bp+bq)), upper = rep(Inf, bp+bq+1))
+#   return(res)
+# }
 
 
