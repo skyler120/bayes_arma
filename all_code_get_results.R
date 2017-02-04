@@ -239,39 +239,18 @@ logf_neg = function(params){
 ############### Compute Accuracy ###############
 
 fitted_acc <- function(x, y, bp, bq, rp, rq){
-  arima_x1 = auto.arima(x, d=0, max.p=10, max.q = 10, allowmean = F, approximation = F, stepwise = F)
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
-  tarima_x1 = arima(x, order=c(rp,0,rq), include.mean=F, method="ML")
-  a = max(arima_x1$residuals)
-  b = max(barima_x1$residuals)
-  
-  if(a>b){
-    plot(1:length(x),x - arima_x1$residuals, col="blue", type='l')
-    lines(1:length(x), x , col="black")
-    lines(1:length(x),x - barima_x1$residuals, col="red")
-    lines(1:length(x),x - tarima_x1$residuals, col="green")
-    
-  }else{
-    plot(1:length(x),x - barima_x1$residuals, col="red", type='l')
-    lines(1:length(x), x , col="black")
-    lines(1:length(x),x - arima_x1$residuals, col="blue")
-    lines(1:length(x),x - tarima_x1$residuals, col="green")
-  }
+  arima_x1 = arima(x, order = c(rp,rq), include.mean=F, method="ML")
   
   rmse_auto_x  = sqrt(sum((arima_x1$residuals)^2  ) / length(x))
   rmse_bayes_x  = sqrt(sum((barima_x1$residuals)^2  ) / length(x))
-  rmse_true_x  = sqrt(sum((tarima_x1$residuals)^2  ) / length(x))
   
   fax = forecast(arima_x1, h=length(y))
   fbx = forecast(barima_x1, h=length(y))
-  ftx = forecast(tarima_x1, h=length(y))
-  
+
   trmse_auto_x  = sqrt(sum((y-fax$mean)^2  ) / length(y))
   trmse_bayes_x  = sqrt(sum((y-fbx$mean)^2  ) / length(y))
-  trmse_true_x  = sqrt(sum((y-ftx$mean)^2  ) / length(y))
-  
-  
-  return(c(arima_x1$arma[1], arima_x1$arma[2], rmse_auto_x, rmse_bayes_x, rmse_true_x, trmse_auto_x, trmse_bayes_x, trmse_true_x))
+  return(c(rmse_auto_x, rmse_bayes_x, trmse_auto_x, trmse_bayes_x))
 }
 
 ############### Generate Sample Data ###############
@@ -331,9 +310,48 @@ bayes_arima <- function(x,y, p, q, init){
     res = optim(init, logf_neg)
     params = res$par
     hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
-    return(list(transformed_params = res$par, pdm = f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2)))
+    result = f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2)
+    if(is.nan(result)){ result = -Inf}
+        return(list(transformed_params = res$par, pdm = result))
   }
   return(list(transformed_params = NULL, pdm =  -Inf))
+}
+
+
+############### MLE Order Determination ###############
+
+mle_arma <- function(x){
+  ev = matrix(-Inf,maxp+1,maxq+1)
+  for(p in 0:maxp){
+    for(q in 0:maxq){
+      a = arima(x, order=c(p,0,q), include.mean=F, method="ML")
+      ev[p+1,q+1] = a$loglik
+    }
+  }
+  m = which(ev == max(ev), arr.ind = TRUE)
+  mlp = m[1,1] - 1
+  mlq = m[1,2] - 1
+  return(c(mlp, mlq))
+}
+
+
+############### OFCV Order Determination ###############
+
+ofcv_arma <- function(x){
+  train = x[1:floor(length(x)*0.8)]
+  test = x[floor(length(x)*0.8):length(x)]
+  ev = matrix(-Inf,maxp+1,maxq+1)
+  for(p in 0:maxp){
+    for(q in 0:maxq){
+      a = arima(train, order=c(p,0,q), include.mean=F, method="ML")
+      fax = forecast(a, h=length(test))
+      ev[p+1,q+1] = sqrt(sum((test-fax$mean)^2  ) / length(test))
+    }
+  }
+  m = which(ev == min(ev), arr.ind = TRUE)
+  cvp = m[1,1] - 1
+  cvq = m[1,2] - 1
+  return(c(cvp, cvq))
 }
 
 
