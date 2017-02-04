@@ -35,7 +35,7 @@ for(j in 1:num_series){
     bp = m[1,1] - 1
     bq = m[1,2] - 1
     lag_terms = get_coeffs(best_params, bp, bq)
-    results_os[[i]] = c(bp,bq)
+    results_os[[i]] = list(orders = c(bp,bq), lags = lag_terms)
   }
   results55[[j]] = results_os
 }
