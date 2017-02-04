@@ -331,7 +331,8 @@ mle_arma <- function(x){
   m = which(ev == max(ev), arr.ind = TRUE)
   mlp = m[1,1] - 1
   mlq = m[1,2] - 1
-  return(c(mlp, mlq))
+  a = arima(x, order=c(mlp,0,mlq), include.mean=F, method="ML")
+  return(list(ords = c(mlp, mlq), coeffs = a$coef))
 }
 
 
@@ -351,7 +352,8 @@ ofcv_arma <- function(x){
   m = which(ev == min(ev), arr.ind = TRUE)
   cvp = m[1,1] - 1
   cvq = m[1,2] - 1
-  return(c(cvp, cvq))
+  a = arima(train, order=c(cvp,0,cvq), include.mean=F, method="ML")
+  return(list(ords = c(cvp, cvq), coeffs = a$coef))
 }
 
 

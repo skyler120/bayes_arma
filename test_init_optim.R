@@ -13,6 +13,7 @@ results55 <- vector("list", length(vs))
 for(j in 1:num_series){
   results_os <- vector("list", num_initial)
   for(i in 1:num_initial){
+    pt <- proc.time()[3]
     ev = matrix(-Inf,maxp+1,maxq+1)
     print(i)
     x = vs[[1]]$series
@@ -35,7 +36,7 @@ for(j in 1:num_series){
     bp = m[1,1] - 1
     bq = m[1,2] - 1
     lag_terms = get_coeffs(best_params, bp, bq)
-    results_os[[i]] = list(orders = c(bp,bq), lags = lag_terms)
+    results_os[[i]] = list(times = proc.time()[3] - pt, orders = c(bp,bq), lags = lag_terms)
   }
   results55[[j]] = results_os
 }
