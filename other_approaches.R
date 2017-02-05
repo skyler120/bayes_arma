@@ -3,14 +3,14 @@
 #the orders, training rmse, and forecast rmse for each method
 setwd("~/Desktop/bayes_arma")
 source("all_code_get_results.R")
-rp = 5; rq = 3;  #change these to test different series
+rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 num_series = 25
 samp_size = 125
 nois = 1
 vs = gen_series(num_series,samp_size,nois, rp,rq)
 # saving vs, do for each rp and rq
-saveRDS(vs,file='other_approaches_series_53') # change file name!!!
+saveRDS(vs,file='other_approaches_series_21') # change file name!!!
 
 
 ################# Bayes ARMA #############################
@@ -41,7 +41,7 @@ for(i in 1:length(vs)){
   lag_terms = get_coeffs(best_params, bp, bq)
   results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
 }
-saveRDS(results55,file='BARMA_approach_53') # change file name!!!
+saveRDS(results55,file='BARMA_approach_21') # change file name!!!
 
 ################# Maximum Likelihood Estimation #########################
 results55 <- vector("list", length(vs))
@@ -75,7 +75,7 @@ for(i in 1:length(vs)){
   pt <- proc.time()[3]
   print(i)
   x = vs[[i]]$series
-  a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="aic", stepwise = F)
+  a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
   aicp = a$arma[1]
   aicq = a$arma[2]
   
@@ -88,7 +88,7 @@ for(i in 1:length(vs)){
   pt <- proc.time()[3]
   print(i)
   x = vs[[i]]$series
-  a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="aicc", stepwise = F)
+  a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aicc", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
   aiccp = a$arma[1]
   aiccq = a$arma[2]
   
@@ -101,7 +101,7 @@ for(i in 1:length(vs)){
   pt <- proc.time()[3]
   print(i)
   x = vs[[i]]$series
-  a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="bic", stepwise = F)
+  a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="bic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
   bicp = a$arma[1]
   bicq = a$arma[2]
   
