@@ -1,5 +1,5 @@
 require(ggplot2)
-require(ggtheme)
+require(ggthemes)
 require(reshape2)
 
 ### using results from one time series
