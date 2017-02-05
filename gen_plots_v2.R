@@ -1,4 +1,5 @@
 require(ggplot2)
+require(ggtheme)
 require(reshape2)
 
 ### using results from one time series
@@ -27,10 +28,6 @@ par(mfrow=c(1,1))
 
 ### using results from multiple ts with different initializations
 # plot shows robustness to initializations
-
-int.hist = function(x,ylab="Frequency",...) {
-  barplot(table(factor(x,levels=min(x):max(x))),space=0,xaxt="n",ylab=ylab,...);axis(1)
-}
 
 # sample dataset
 # order estimates using initialization = 0
