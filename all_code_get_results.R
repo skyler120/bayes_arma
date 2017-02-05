@@ -1,3 +1,9 @@
+require(forecast)
+require(cubature)
+require(GenSA)
+require(ggplot2)
+require(numDeriv)
+
 ############################# Recursive Function for phi and pi ###############################################
 
 phiphi = function(k,r){
@@ -16,7 +22,6 @@ phiphi = function(k,r){
   }
   return(phimat[k,])
 }
-
 
 ############################# Recursive Function for mu_t ###############################################
 
@@ -158,7 +163,6 @@ logJpis.H = function(params){
   return(diagH)
 }
 
-
 ############### This is where we find the argmax of the integrand ###############
 
 # integrand function, note optim function finds argmin i.e. of -f
@@ -293,14 +297,13 @@ gen_var_samp_series <- function(num_series, samps,pp,qq){
 
 gen_var_noise_series <- function(num_series, noises, pp,qq){
   i = 1
-  samp = 200
+  samp = 125
   res <- vector("list", length(noises))
   for(i in 1:length(noises)){
     res[[i]] = try(gen_series(num_series, samp, noises[i], pp, qq))
   }
   return(res)
 }
-
 
 ############### Bayesian ARMA Model Order Determination ###############
 
@@ -316,7 +319,6 @@ bayes_arima <- function(x,y, p, q, init){
   }
   return(list(transformed_params = NULL, pdm =  -Inf))
 }
-
 
 ############### MLE Order Determination ###############
 
@@ -334,7 +336,6 @@ mle_arma <- function(x){
   a = arima(x, order=c(mlp,0,mlq), include.mean=F, method="ML")
   return(list(ords = c(mlp, mlq), coeffs = a$coef))
 }
-
 
 ############### OFCV Order Determination ###############
 
@@ -355,7 +356,6 @@ ofcv_arma <- function(x){
   a = arima(train, order=c(cvp,0,cvq), include.mean=F, method="ML")
   return(list(ords = c(cvp, cvq), coeffs = a$coef))
 }
-
 
 ############### Find untransformed coeffs ###############
 r_to_phi <- function(r){
