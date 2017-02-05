@@ -1,6 +1,7 @@
 ################# Scaling the variance of the arima process ############################
 #This file creates nums number of series of size with varying amounts of noise in noiss
-
+setwd("~/Desktop/bayes_arma")
+source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 noiss = 1:10

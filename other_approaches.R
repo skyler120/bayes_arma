@@ -1,6 +1,7 @@
 ################# Basic comparison of algorithm for each of different approaches #############################
 #This file creates 25 series of orders rp and rq and outputs 
 #the orders, training rmse, and forecast rmse for each method
+setwd("~/Desktop/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;

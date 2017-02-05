@@ -1,4 +1,6 @@
 ################# Changing intiialization of optim ############################
+setwd("~/Desktop/bayes_arma")
+source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 num_initial = 25
 maxp = 10; maxq = 10;

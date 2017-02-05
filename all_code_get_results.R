@@ -1,3 +1,4 @@
+setwd("~/Desktop/bayes_arma")
 require(forecast)
 require(cubature)
 require(GenSA)
@@ -14,8 +15,8 @@ phiphi = function(k,r){
         phimat[j,i] =tanh(r[j])
       }
       else{
-        phiipre = phimat[i,j-1]
-        phiki = phimat[j-i,j-1]
+        phiipre = phimat[j-1,i]
+        phiki = phimat[j-1,j-i]
         phimat[j,i] = phiipre - tanh(r[j])*phiki
       }
     }
@@ -244,7 +245,7 @@ logf_neg = function(params){
 
 fitted_acc <- function(x, y, bp, bq, rp, rq){
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
-  arima_x1 = arima(x, order = c(rp,rq), include.mean=F, method="ML")
+  arima_x1 = arima(x, order = c(rp,0,rq), include.mean=F, method="ML")
   
   rmse_auto_x  = sqrt(sum((arima_x1$residuals)^2  ) / length(x))
   rmse_bayes_x  = sqrt(sum((barima_x1$residuals)^2  ) / length(x))
@@ -260,13 +261,12 @@ fitted_acc <- function(x, y, bp, bq, rp, rq){
 ############### Generate Sample Data ###############
 
 gen_arm <- function(samp, pp, qq, noise_level){
-  set.seed(150)
   train = floor(0.8*samp)
   if((pp+qq)>0){
     phis = runif(pp,-1,1)
     pis = runif(qq,-1,1)
     x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = runif(1,0,noise_level))
-    return(list(series=x[1:train],forc = x[train+1:samp], p = pp, q = qq))
+    return(list(series=x[1:train],forc = na.omit(x[train+1:samp]), p = pp, q = qq))
   }
 }
 
@@ -326,15 +326,16 @@ mle_arma <- function(x){
   ev = matrix(-Inf,maxp+1,maxq+1)
   for(p in 0:maxp){
     for(q in 0:maxq){
-      a = arima(x, order=c(p,0,q), include.mean=F, method="ML")
-      ev[p+1,q+1] = a$loglik
+      a = try(arima(x, order=c(p,0,q), include.mean=F, method="ML"))
+      if(typeof(a)=="character"){ ev[p+1, q+1] = -Inf}
+      else {ev[p+1,q+1] = a$loglik}
     }
   }
   m = which(ev == max(ev), arr.ind = TRUE)
   mlp = m[1,1] - 1
   mlq = m[1,2] - 1
   a = arima(x, order=c(mlp,0,mlq), include.mean=F, method="ML")
-  return(list(ords = c(mlp, mlq), coeffs = a$coef))
+  return(list(ords = c(mlp, mlq), coeffs = a$coef, mat = ev))
 }
 
 ############### OFCV Order Determination ###############
@@ -342,19 +343,76 @@ mle_arma <- function(x){
 ofcv_arma <- function(x){
   train = x[1:floor(length(x)*0.8)]
   test = x[floor(length(x)*0.8):length(x)]
-  ev = matrix(-Inf,maxp+1,maxq+1)
+  ev = matrix(Inf,maxp+1,maxq+1)
   for(p in 0:maxp){
     for(q in 0:maxq){
-      a = arima(train, order=c(p,0,q), include.mean=F, method="ML")
-      fax = forecast(a, h=length(test))
-      ev[p+1,q+1] = sqrt(sum((test-fax$mean)^2  ) / length(test))
+      a = try(arima(x, order=c(p,0,q), include.mean=F, method="ML"))
+      if(typeof(a)=="character"){
+        ev[p+1, q+1] = Inf
+      }
+      else {
+        fax = forecast(a, h=length(test))
+        ev[p+1,q+1] = sqrt(sum((test-fax$mean)^2  ) / length(test))
+      }
+
     }
   }
   m = which(ev == min(ev), arr.ind = TRUE)
   cvp = m[1,1] - 1
   cvq = m[1,2] - 1
   a = arima(train, order=c(cvp,0,cvq), include.mean=F, method="ML")
-  return(list(ords = c(cvp, cvq), coeffs = a$coef))
+  return(list(ords = c(cvp, cvq), coeffs = a$coef, mat = ev))
+}
+
+############### AIC Order Determination ###############
+aic_arma <- function(x){
+  ev = matrix(-Inf,maxp+1,maxq+1)
+  for(p in 0:maxp){
+    for(q in 0:maxq){
+      a = try(arima(x, order=c(p,0,q), include.mean=F, method="ML"))
+      if(typeof(a)=="character"){ ev[p+1, q+1] = -Inf}
+      else {ev[p+1,q+1] = 2*length(a$coef) +2 - 2*a$loglik}
+    }
+  }
+  m = which(ev == min(ev), arr.ind = TRUE)
+  mlp = m[1,1] - 1
+  mlq = m[1,2] - 1
+  a = arima(x, order=c(mlp,0,mlq), include.mean=F, method="ML")
+  return(list(ords = c(mlp, mlq), coeffs = a$coef, mat = ev))
+}
+
+############### AICc Order Determination ###############
+aicc_arma <- function(x){
+  ev = matrix(-Inf,maxp+1,maxq+1)
+  for(p in 0:maxp){
+    for(q in 0:maxq){
+      a = try(arima(x, order=c(p,0,q), include.mean=F, method="ML"))
+      if(typeof(a)=="character"){ ev[p+1, q+1] = -Inf}
+      else {ev[p+1,q+1] = (2*length(a$coef) +2 - 2*a$loglik) + (2*(length(a$coef)+2)*(length(a$coef)+3))/(length(x) - length(a$coef) - 3)}
+    }
+  }
+  m = which(ev == min(ev), arr.ind = TRUE)
+  mlp = m[1,1] - 1
+  mlq = m[1,2] - 1
+  a = arima(x, order=c(mlp,0,mlq), include.mean=F, method="ML")
+  return(list(ords = c(mlp, mlq), coeffs = a$coef, mat = ev))
+}
+
+############### BIC Order Determination ###############
+bic_arma <- function(x){
+  ev = matrix(-Inf,maxp+1,maxq+1)
+  for(p in 0:maxp){
+    for(q in 0:maxq){
+      a = try(arima(x, order=c(p,0,q), include.mean=F, method="ML"))
+      if(typeof(a)=="character"){ ev[p+1, q+1] = -Inf}
+      else {ev[p+1,q+1] = log(length(x))*(length(a$coef) + 1) - 2*a$loglik}
+    }
+  }
+  m = which(ev == max(ev), arr.ind = TRUE)
+  mlp = m[1,1] - 1
+  mlq = m[1,2] - 1
+  a = arima(x, order=c(mlp,0,mlq), include.mean=F, method="ML")
+  return(list(ords = c(mlp, mlq), coeffs = a$coef, mat = ev))
 }
 
 ############### Find untransformed coeffs ###############
@@ -380,7 +438,7 @@ get_coeffs<- function(transformed_params, bp, bq){
   return(params)
 }
 
-############### Find Coeffs of phis and pis ###############
+############### Find Coeffs of phis and pis (IGNORE) ###############
 # joint_data_model_coeffs <- function(params){
 #   params[1] = log(params[1])
 #   return(exp(logp_bpbq(params)))
@@ -390,5 +448,4 @@ get_coeffs<- function(transformed_params, bp, bq){
 #   res = optim(init_params, joint_data_model_coeffs, method = "L-BFGS-B", lower = c(0, rep(-Inf,bp+bq)), upper = rep(Inf, bp+bq+1))
 #   return(res)
 # }
-
 

@@ -1,5 +1,6 @@
 ################# Scaling the number of data points ############################
 #This file creates nums number of series of size sampls and evaluates all methods
+setwd("~/Desktop/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
