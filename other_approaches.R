@@ -1,11 +1,13 @@
 ################# Basic comparison of algorithm for each of different approaches #############################
 #This file creates 25 series of orders rp and rq and outputs 
 #the orders, training rmse, and forecast rmse for each method
-
+source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 num_series = 25
-vs = gen_series(num_series, rp,rq)
+samp_size = 125
+nois = 1
+vs = gen_series(num_series,samp_size,nois, rp,rq)
 # saving vs, do for each rp and rq
 saveRDS(vs,file='other_approaches_series_21') # change file name!!!
 
@@ -104,5 +106,5 @@ for(i in 1:length(vs)){
   
   results55[[i]] = c(proc.time()[3] - pt, bicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$coef)
 }
-saveRDS(results55,file='aicc_approach_21') # change file name!!!
+saveRDS(results55,file='bic_approach_21') # change file name!!!
 

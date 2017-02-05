@@ -4,7 +4,9 @@ num_initial = 25
 maxp = 10; maxq = 10;
 ######### need to look at how to change initialization just set to random?
 num_series = 25
-vs = gen_series(num_series, rp,rq)
+samp_size = 125
+nois = 1
+vs = gen_series(num_series,samp_size, nois, rp,rq)
 
 # saving vs, do for each rp and rq
 saveRDS(vs,file='init_test_method_series_21') # change file name!!!
@@ -36,7 +38,7 @@ for(j in 1:num_series){
     bp = m[1,1] - 1
     bq = m[1,2] - 1
     lag_terms = get_coeffs(best_params, bp, bq)
-    results_os[[i]] = list(times = proc.time()[3] - pt, orders = c(bp,bq), lags = lag_terms)
+    results_os[[i]] = list(times = proc.time()[3] - pt, initials = initial, orders = c(bp,bq), lags = lag_terms)
   }
   results55[[j]] = results_os
 }
