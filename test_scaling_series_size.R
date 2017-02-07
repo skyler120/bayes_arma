@@ -92,10 +92,10 @@ for(i in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]]$series
-    a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="aic", stepwise = F)
+    a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     aicp = a$arma[1]
     aicq = a$arma[2]
-    results5[[j]] = c(proc.time()[3] - pt, aicp, aicq, fitted_acc(x,y,aicp,aicq,rp,rq), a$coef)
+    results5[[j]] = c(proc.time()[3] - pt, aicp, aicq, fitted_acc(x,y,aicp,aicq,rp,rq), a$sigma2, a$coef)
   }
   results55[[i]] = results5
 }
@@ -108,10 +108,10 @@ for(i in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]]$series
-    a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="aicc", stepwise = F)
+    a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aicc", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     aiccp = a$arma[1]
     aiccq = a$arma[2]
-    results5[[j]] = c(proc.time()[3] - pt, aiccp, aiccq, fitted_acc(x,y,aiccp,aiccq,rp,rq), a$coef)
+    results5[[j]] = c(proc.time()[3] - pt, aiccp, aiccq, fitted_acc(x,y,aiccp,aiccq,rp,rq), a$sigma2, a$coef)
   }
   results55[[i]] = results5
 }
@@ -124,10 +124,10 @@ for(i in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]]$series
-    a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="bic", stepwise = F)
+    a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="bic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     bicp = a$arma[1]
     bicq = a$arma[2]
-    results5[[j]] = c(proc.time()[3] - pt, bicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$coef)
+    results5[[j]] = c(proc.time()[3] - pt, bicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$sigma2, a$coef)
   }
   results55[[i]] = results5
 }
