@@ -10,7 +10,7 @@ samp_size = 125
 nois = 1
 vs = gen_series(num_series,samp_size,nois, rp,rq)
 # saving vs, do for each rp and rq
-saveRDS(vs,file='other_approaches_series_21') # change file name!!!
+saveRDS(vs,file='other_approaches_series_86') # change file name!!!
 
 
 ################# Bayes ARMA #############################
@@ -41,7 +41,7 @@ for(i in 1:length(vs)){
   lag_terms = get_coeffs(best_params, bp, bq)
   results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
 }
-saveRDS(results55,file='BARMA_approach_21') # change file name!!!
+saveRDS(results55,file='BARMA_approach_86') # change file name!!!
 
 ################# Maximum Likelihood Estimation #########################
 results55 <- vector("list", length(vs))
@@ -53,7 +53,7 @@ for(i in 1:length(vs)){
   mlos = mle_arma(x)
   results55[[i]] = c(proc.time()[3] - pt, mlos$ords, fitted_acc(x,y,mlos$ords[1],mlos$ords[2],rp,rq), mlos$coeffs)
 }
-saveRDS(results55,file='MLE_approach_21') # change file name!!!
+saveRDS(results55,file='MLE_approach_86') # change file name!!!
 
 
 ################# Cross Validation (OFCV) #########################
@@ -66,7 +66,7 @@ for(i in 1:length(vs)){
   cvos = ofcv_arma(x)
   results55[[i]] = c(proc.time()[3] - pt, cvos$ords, fitted_acc(x,y,cvos$ords[1],cvos$ords[2],rp,rq), cvos$coeffs)
 }
-saveRDS(results55,file='OFCV_approach_21') # change file name!!!
+saveRDS(results55,file='OFCV_approach_86') # change file name!!!
 
 
 ################# IC based methods #############################
@@ -79,9 +79,9 @@ for(i in 1:length(vs)){
   aicp = a$arma[1]
   aicq = a$arma[2]
   
-  results55[[i]] = c(proc.time()[3] - pt, aicp, aicq, fitted_acc(x,y,aicp,aicq,rp,rq), a$coef)
+  results55[[i]] = c(proc.time()[3] - pt, aicp, aicq, fitted_acc(x,y,aicp,aicq,rp,rq), a$sigma2, a$coef)
 }
-saveRDS(results55,file='aic_approach_21') # change file name!!!
+saveRDS(results55,file='aic_approach_86') # change file name!!!
 
 results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
@@ -92,9 +92,9 @@ for(i in 1:length(vs)){
   aiccp = a$arma[1]
   aiccq = a$arma[2]
   
-  results55[[i]] = c(proc.time()[3] - pt, aiccp, aiccq, fitted_acc(x,y,aiccp,aiccq,rp,rq), a$coef)
+  results55[[i]] = c(proc.time()[3] - pt, aiccp, aiccq, fitted_acc(x,y,aiccp,aiccq,rp,rq), a$sigma2, a$coef)
 }
-saveRDS(results55,file='aicc_approach_21') # change file name!!!
+saveRDS(results55,file='aicc_approach_86') # change file name!!!
 
 results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
@@ -105,7 +105,7 @@ for(i in 1:length(vs)){
   bicp = a$arma[1]
   bicq = a$arma[2]
   
-  results55[[i]] = c(proc.time()[3] - pt, bicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$coef)
+  results55[[i]] = c(proc.time()[3] - pt, bicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$sigma2, a$coef)
 }
-saveRDS(results55,file='bic_approach_21') # change file name!!!
+saveRDS(results55,file='bic_approach_86') # change file name!!!
 

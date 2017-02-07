@@ -1,4 +1,3 @@
-setwd("~/Desktop/bayes_arma")
 require(forecast)
 require(cubature)
 require(GenSA)
@@ -308,15 +307,16 @@ gen_var_noise_series <- function(num_series, noises, pp,qq){
 ############### Bayesian ARMA Model Order Determination ###############
 
 bayes_arima <- function(x,y, p, q, init){
-  if(p+q>0){
+  #if(p+q>0){
     #init = rep(0,p+q+1)
-    res = optim(init, logf_neg)
+    res = optim(init, logf_neg, method="L-BFGS-B",control = list(maxit=1000), hessian = T)
     params = res$par
-    hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
+    hess = -res$hessian
+    #hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
     result = f(res$par)*(2*pi)^(dim(hess)[1]/2)*det(-hess)^(-1/2)
     if(is.nan(result)){ result = -Inf}
-        return(list(transformed_params = res$par, pdm = result))
-  }
+      return(list(transformed_params = res$par, pdm = result))
+  #}
   return(list(transformed_params = NULL, pdm =  -Inf))
 }
 
