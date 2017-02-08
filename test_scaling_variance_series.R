@@ -4,23 +4,26 @@ setwd("~/Desktop/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
-noiss = 1:10
+noiss = c(1,5,10)
 nums = 10
-vs = gen_var_noise_series(nums, noiss, rp,rq)
+vs = readRDS('scaling_variance_method_series_21')
+vs = gen_noise(nums, 125, noiss, rp,rq)
 
 # saving vs, do for each rp and rq
-saveRDS(vs,file='scaling_variance_method_series_21') # change file name!!!
+saveRDS(vs,file='scaling2_variance_method_series_21') # change file name!!!
 
 ################# Bayes ARMA #############################
 results55 <- vector("list", length(noiss))
-for(i in 1:length(noiss)){
+for(i in 1:nums){
+  print(noiss[i])
   results5 <- vector("list", length(nums))
-  for(j in 1:length(nums)){
+  for(j in 1:length(noiss)){
+    print(j)
     pt <- proc.time()[3]
     ev = matrix(-Inf,maxp+1,maxq+1)
     print(i)
-    x = vs[[i]]$series
-    y = vs[[i]]$forc
+    x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     #run our algorithm
     prev_pdm = -Inf
     best_params = NULL
@@ -44,51 +47,53 @@ for(i in 1:length(noiss)){
   results55[[i]] = results5
 }
 # saving results55, do for each rp and rq
-saveRDS(results55,file='ABARMA_scaling_variance_results_21') # change file name!!!
+saveRDS(results55,file='BARMA2_scaling_variance_results_21') # change file name!!!
 
 
 ################# Maximum Likelihood Estimation #########################
 results55 <- vector("list", length(noiss))
-for(i in 1:length(noiss)){
+for(i in 1:nums){
   results5 <- vector("list", length(nums))
-  for(j in 1:length(nums)){
+  for(j in 1:length(noiss)){
     pt <- proc.time()[3]
     print(i)
-    x = vs[[i]]$series
-    y = vs[[i]]$forc
+    x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     mlos = mle_arma(x)
     results5[[j]] = c(proc.time()[3] - pt, mlos$ords, fitted_acc(x,y,mlos$ords[1],mlos$ords[2],rp,rq), mlos$coeffs)
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='MLE_scaling_var_21') # change file name!!!
+saveRDS(results55,file='MLE2_scaling_var_21') # change file name!!!
 
 
 ################# Cross Validation (OFCV) #########################
 #based on forecast accuracy iteratively and find the lowest forecast on a held out set 
 results55 <- vector("list", length(noiss))
-for(i in 1:length(noiss)){
+for(i in 1:nums){
   results5 <- vector("list", length(nums))
-  for(j in 1:length(nums)){
+  for(j in 1:length(noiss)){
     pt <- proc.time()[3]
-    print(i)
-    x = vs[[i]]$series
+    print(i) 
+    x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     cvos = ofcv_arma(x)
     results5[[j]] = c(proc.time()[3] - pt, cvos$ords, fitted_acc(x,y,cvos$ords[1],cvos$ords[2],rp,rq), cvos$coeffs)
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='OFCV_scaling_var_21') # change file name!!!
+saveRDS(results55,file='OFCV2_scaling_var_21') # change file name!!!
 
 
 ################# IC based methods #############################
 results55 <- vector("list", length(noiss))
-for(i in 1:length(noiss)){
+for(i in 1:nums){
   results5 <- vector("list", length(nums))
-  for(j in 1:length(nums)){
+  for(j in 1:length(noiss)){
     pt <- proc.time()[3]
     print(i)
-    x = vs[[i]]$series
+    x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="aic", stepwise = F)
     aicp = a$arma[1]
     aicq = a$arma[2]
@@ -97,15 +102,16 @@ for(i in 1:length(noiss)){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='aic_scaling_var_21') # change file name!!!
+saveRDS(results55,file='aic2_scaling_var_21') # change file name!!!
 
 results55 <- vector("list", length(noiss))
-for(i in 1:length(noiss)){
+for(i in 1:nums){
   results5 <- vector("list", length(nums))
-  for(j in 1:length(nums)){
+  for(j in 1:length(noiss)){
     pt <- proc.time()[3]
     print(i)
-    x = vs[[i]]$series
+    x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="aicc", stepwise = F)
     aiccp = a$arma[1]
     aiccq = a$arma[2]
@@ -114,21 +120,22 @@ for(i in 1:length(noiss)){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='aicc_scaling_var_21') # change file name!!!
+saveRDS(results55,file='aicc2_scaling_var_21') # change file name!!!
 
 results55 <- vector("list", length(noiss))
-for(i in 1:length(noiss)){
+for(i in 1:nums){
   results5 <- vector("list", length(nums))
-  for(j in 1:length(nums)){
+  for(j in 1:length(noiss)){
     pt <- proc.time()[3]
     print(i)
-    x = vs[[i]]$series
+    x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, approximation = F, ic="bic", stepwise = F)
     bicp = a$arma[1]
     bicq = a$arma[2]
     
-    results5[[j]] = c(proc.time()[3] - ptbicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$coef)
+    results5[[j]] = c(proc.time()[3] - pt,bicp, bicq, fitted_acc(x,y,bicp,bicq,rp,rq), a$coef)
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='bic_scaling_var_21') # change file name!!!
+saveRDS(results55,file='bic2_scaling_var_21') # change file name!!!

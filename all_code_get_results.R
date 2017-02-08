@@ -26,25 +26,30 @@ phiphi = function(k,r){
 ############################# Recursive Function for mu_t ###############################################
 
 muts <- function(phir,pis){
-  poq = max(length(phir), length(pis))
-  mus = rep(0,poq)
-  xapp = c(rep(0,poq), x)
-  for(t in (poq+1):(poq+length(x))){
-    if(p==0){
-      p1 = 0
-    }
-    else{
-      p1 = sum(phir*rev(xapp[(t-p):(t-1)]))
-    }
-    if(q==0){
-      p2 = 0
-    }
-    else{
-      p2 = sum(pis*(rev(xapp[(t-q):(t-1)]) - mus[(t-q):(t-1)]))
-    }
-    mus = c(mus, p1-p2)
+  if(p+q == 0){
+    return(rep(0,length(x)))
   }
-  return(mus)
+  else{
+    poq = max(length(phir), length(pis))
+    mus = rep(0,poq)
+    xapp = c(rep(0,poq), x)
+    for(t in (poq+1):(poq+length(x))){
+      if(p==0){
+        p1 = 0
+      }
+      else{
+        p1 = sum(phir*rev(xapp[(t-p):(t-1)]))
+      }
+      if(q==0){
+        p2 = 0
+      }
+      else{
+        p2 = sum(pis*(rev(xapp[(t-q):(t-1)]) - mus[(t-q):(t-1)]))
+      }
+      mus = c(mus, p1-p2)
+    }
+    return(mus)
+  }
 }
 
 
@@ -237,7 +242,10 @@ logf_neg = function(params){
   }
   # J_sigma
   Jsigma = params[1]
-  return(-pfunc-Jr-Js-Jphir-Jpis-Jsigma)
+  res = -pfunc-Jr-Js-Jphir-Jpis-Jsigma
+  #if(res>10^(308)){return(10^308)
+  #}else if(res<-Inf){return(-10^(308))}
+  return(res)
 }
 
 ############### Compute Accuracy ###############
@@ -264,9 +272,41 @@ gen_arm <- function(samp, pp, qq, noise_level){
   if((pp+qq)>0){
     phis = runif(pp,-1,1)
     pis = runif(qq,-1,1)
-    x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = runif(1,0,noise_level))
-    return(list(series=x[1:train],forc = na.omit(x[train+1:samp]), p = pp, q = qq))
+    x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = noise_level)
+    return(list(ps = phis, qs = pis, series=x[1:train],forc = na.omit(x[train+1:samp]), p = pp, q = qq))
   }
+}
+
+gen_coeffs <- function(samp, pp, qq, noise_level){
+  train = floor(0.8*samp)
+  if((pp+qq)>0){
+    phis = runif(pp,-1,1)
+    pis = runif(qq,-1,1)
+    x = arima.sim(n = samp, list(ar = phis, ma = pis), sd = noise_level)
+    return(list(ps = phis, qs = pis))
+  }
+}
+
+gen_noise <- function(num_series, samp, noises, pp,qq){
+  i=1
+  train = floor(0.8*samp)
+  res <- vector("list", num_series)
+  while(i<=num_series){
+    temp = try(gen_coeffs(samp, pp, qq, noises[1]))
+    if (typeof(temp)=="character"){
+      temp  = NULL
+    }
+    else{
+      res5 <- vector("list", length(noises))
+      for(j in 1:length(noises)){
+        x = arima.sim(n = samp, list(ar = temp$ps, ma = temp$qs), sd = noises[j])
+        res5[[j]] = list(series=x[1:train],forc = na.omit(x[train+1:samp]), p = pp, q = qq)
+      }
+      res[[i]] = res5
+      i <- i+1
+    }
+  }
+  return(res)
 }
 
 gen_series <- function(num_series, sampl, noise_level, pp,qq){
@@ -284,32 +324,36 @@ gen_series <- function(num_series, sampl, noise_level, pp,qq){
   return(res)
 }
 
-gen_var_samp_series <- function(num_series, samps,pp,qq){
-  i = 1
-  noise_level = 1
-  res <- vector("list", length(samps))
-  for(i in 1:length(samps)){
-    res[[i]] = gen_series(num_series, samps[i], noise_level, pp,qq)
-  }
-  return(res)
-}
+# gen_var_samp_series <- function(num_series, samps,pp,qq){
+#   i = 1
+#   noise_level = 1
+#   res <- vector("list", length(samps))
+#   for(i in 1:length(samps)){
+#     res[[i]] = gen_series(num_series, samps[i], noise_level, pp,qq)
+#   }
+#   return(res)
+# }
 
-gen_var_noise_series <- function(num_series, noises, pp,qq){
-  i = 1
-  samp = 125
-  res <- vector("list", length(noises))
-  for(i in 1:length(noises)){
-    res[[i]] = try(gen_series(num_series, samp, noises[i], pp, qq))
-  }
-  return(res)
-}
+# gen_var_noise_series <- function(num_series, noises, pp,qq){
+#   i = 1
+#   samp = 125
+#   res <- vector("list", length(noises))
+#   for(i in 1:length(noises)){
+#     res[[i]] = try(gen_series(num_series, samp, noises[i], pp, qq))
+#   }
+#   return(res)
+# }
 
 ############### Bayesian ARMA Model Order Determination ###############
 
 bayes_arima <- function(x,y, p, q, init){
   #if(p+q>0){
     #init = rep(0,p+q+1)
-    res = optim(init, logf_neg, method="L-BFGS-B",control = list(maxit=1000), hessian = T)
+    res = try(optim(init, logf_neg, method="L-BFGS-B",control = list(maxit=1000), hessian = T))
+    if(typeof(res)=="character"){
+      res = optim(init, logf_neg, method="SANN", hessian = T)
+      print("Done with SANN iter")
+    }
     params = res$par
     hess = -res$hessian
     #hess = logpTheta.H(params) + diag(logJr.H(params) + logJs.H(params) + logJphir.H(params) + logJpis.H(params))
@@ -317,7 +361,7 @@ bayes_arima <- function(x,y, p, q, init){
     if(is.nan(result)){ result = -Inf}
       return(list(transformed_params = res$par, pdm = result))
   #}
-  return(list(transformed_params = NULL, pdm =  -Inf))
+  #return(list(transformed_params = 0, pdm =  -Inf))
 }
 
 ############### MLE Order Determination ###############

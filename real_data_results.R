@@ -1,80 +1,149 @@
+maxp = 10; maxq = 10;
 sp500 = read.csv("quarterly-sp-500-index-19001996.csv")
 dat = sp500$Quarterly.S.P.500.index..1900.1996
-train_split = floor(0.95*length(dat))
+train_split = floor(0.8*length(dat))
 x = dat[1:train_split] 
 mx = mean(x)
 x = x - mx
 y = dat[(train_split+1):length(data)]
-ev = matrix(-Inf,5+1,5+1)
-for(p in 0:5){
-  for(q in 0:5){
-    ev[p+1,q+1] = bayes_arima(x,y,p,q)
-    if(is.nan(ev[p+1, q+1])){
-      ev[p+1, q+1] = -Inf
-    }
-  }
-}
-m = which(ev == max(ev), arr.ind = TRUE)
-bp = m[1,1] - 1
-bq = m[1,2] - 1
-arma_fits = real_fitted_acc(x,y,bp,bq,mx)
-ap = arma_fits[1]
-aq = arma_fits[2]
-acc_sp500 = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
-barima_sp500 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
-plot_resids(barima_sp500$residuals)
+ev = matrix(-Inf,maxp+1,maxq+1)
 
-fin = read.csv("financial-times-index-leading-eq.csv")
-dat = fin$Financial.Times.index.leading.equity.prices..quarterly..1960...1971
-train_split = floor(0.75*length(dat))
-x = dat[1:train_split] 
-mx = mean(x)
-x = x - mx
-y = dat[(train_split+1):length(dat)]
-ev = matrix(-Inf,5+1,5+1)
-for(p in 0:5){
-  for(q in 0:5){
-    ev[p+1,q+1] = bayes_arima(x,y,p,q)
-    if(is.nan(ev[p+1, q+1])){
-      ev[p+1, q+1] = -Inf
+######################## bayes arima #######################
+prev_pdm = -Inf
+best_params = NULL
+for(p in 0:maxp){
+  for(q in 0:maxq){
+    initialize = rep(0,p+q+1)
+    bayes_ar_res = bayes_arima(x,y,p,q, initialize)
+    ev[p+1,q+1] = bayes_ar_res$pdm
+    if(ev[p+1, q+1]> prev_pdm){
+      prev_pdm = ev[p+1, q+1]
+      best_params = bayes_ar_res$transformed_params
     }
   }
 }
 m = which(ev == max(ev), arr.ind = TRUE)
 bp = m[1,1] - 1
 bq = m[1,2] - 1
-arma_fits = real_fitted_acc(x,y,bp,bq,mx)
-ap = arma_fits[1]
-aq = arma_fits[2]
-acc_fin = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
-barima_fin = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
-plot_resids(barima_fin$residuals)
+lag_terms = get_coeffs(best_params, bp, bq)
+res_barma = list(mat = ev, res = c(bp, bq, rfitted_acc(x,y,bp,bq), lag_terms))
+saveRDS(res_barma, "sp500_barma")
 
-eq = read.csv("number-of-earthquakes-per-year-m.csv")
-dat = eq$Number.of.earthquakes.per.year.magnitude.7.0.or.greater..1900.1998
-train_split = floor(0.75*length(dat))
-x = dat[1:train_split] 
-mx = mean(x)
-x = x - mx
-y = dat[(train_split+1):length(dat)]
-ev = matrix(-Inf,5+1,5+1)
-for(p in 0:5){
-  for(q in 0:5){
-    ev[p+1,q+1] = bayes_arima(x,y,p,q)
-    if(is.nan(ev[p+1, q+1])){
-      ev[p+1, q+1] = -Inf
-    }
-  }
+######################## MLE, CV arima #######################
+mlos = mle_arma(x)
+res_mle = list(mat = mlos$mat, res = c(mlos$ords, rfitted_acc(x,y,mlos$ords[1],mlos$ords[2]), mlos$coeffs))
+saveRDS(res_mle, "sp500_mle")
+cvos = ofcv_arma(x)
+res_cv = list(mat = cvos$mat, res = c(cvos$ords, rfitted_acc(x,y,cvos$ords[1],cvos$ords[2]), cvos$coeffs))
+saveRDS(res_cv, "sp500_cv")
+
+######################## IC auto.arima #######################
+a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
+aicp = a$arma[1]
+aicq = a$arma[2]
+res_aic = c(aicp, aicq, rfitted_acc(x,y,aicp,aicq), a$sigma2, a$coef)
+saveRDS(res_aic, "sp500_aic")
+
+a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aicc", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
+aiccp = a$arma[1]
+aiccq = a$arma[2]
+res_aicc = c(aiccp, aiccq, rfitted_acc(x,y,aiccp,aiccq), a$sigma2, a$coef)
+saveRDS(res_aic, "sp500_aicc")
+
+a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="bic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
+bicp = a$arma[1]
+bicq = a$arma[2]
+res_bic = c(bicp, bicq, rfitted_acc(x,y,bicp,bicq), a$sigma2, a$coef)
+saveRDS(res_bic, "sp500_bic")
+
+################ Fitted Acc ############
+rfitted_acc <- function(x, y, bp, bq){
+  barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+  rmse_bayes_x  = sqrt(sum((barima_x1$residuals)^2  ) / length(x))
+  fbx = forecast(barima_x1, h=length(y))
+    trmse_bayes_x  = sqrt(sum((y-fbx$mean)^2  ) / length(y))
+  return(c(rmse_bayes_x, trmse_bayes_x))
 }
-m = which(ev == max(ev), arr.ind = TRUE)
-bp = m[1,1] - 1
-bq = m[1,2] - 1
-arma_fits = real_fitted_acc(x,y,bp,bq,mx)
-ap = arma_fits[1]
-aq = arma_fits[2]
-acc_eq = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
-barima_eq = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
-plot_resids(barima_eq$residuals)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############################ IGNORE ################
+# arma_fits = fitted_acc(x,y,bp,bq,mx)
+# ap = arma_fits[1]
+# aq = arma_fits[2]
+# acc_sp500 = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
+# barima_sp500 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+# plot_resids(barima_sp500$residuals)
+# 
+# fin = read.csv("financial-times-index-leading-eq.csv")
+# dat = fin$Financial.Times.index.leading.equity.prices..quarterly..1960...1971
+# train_split = floor(0.75*length(dat))
+# x = dat[1:train_split] 
+# mx = mean(x)
+# x = x - mx
+# y = dat[(train_split+1):length(dat)]
+# ev = matrix(-Inf,5+1,5+1)
+# for(p in 0:5){
+#   for(q in 0:5){
+#     ev[p+1,q+1] = bayes_arima(x,y,p,q)
+#     if(is.nan(ev[p+1, q+1])){
+#       ev[p+1, q+1] = -Inf
+#     }
+#   }
+# }
+# m = which(ev == max(ev), arr.ind = TRUE)
+# bp = m[1,1] - 1
+# bq = m[1,2] - 1
+# arma_fits = real_fitted_acc(x,y,bp,bq,mx)
+# ap = arma_fits[1]
+# aq = arma_fits[2]
+# acc_fin = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
+# barima_fin = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+# plot_resids(barima_fin$residuals)
+# 
+# eq = read.csv("number-of-earthquakes-per-year-m.csv")
+# dat = eq$Number.of.earthquakes.per.year.magnitude.7.0.or.greater..1900.1998
+# train_split = floor(0.75*length(dat))
+# x = dat[1:train_split] 
+# mx = mean(x)
+# x = x - mx
+# y = dat[(train_split+1):length(dat)]
+# ev = matrix(-Inf,5+1,5+1)
+# for(p in 0:5){
+#   for(q in 0:5){
+#     ev[p+1,q+1] = bayes_arima(x,y,p,q)
+#     if(is.nan(ev[p+1, q+1])){
+#       ev[p+1, q+1] = -Inf
+#     }
+#   }
+# }
+# m = which(ev == max(ev), arr.ind = TRUE)
+# bp = m[1,1] - 1
+# bq = m[1,2] - 1
+# arma_fits = real_fitted_acc(x,y,bp,bq,mx)
+# ap = arma_fits[1]
+# aq = arma_fits[2]
+# acc_eq = c(ap,aq,bp,bq,arma_fits[3:length(arma_fits)])
+# barima_eq = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+# plot_resids(barima_eq$residuals)
 
 ############### Real Fitted Accuracy #########################
 real_fitted_acc <- function(x, y, bp, bq, mx){

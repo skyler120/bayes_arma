@@ -3,14 +3,15 @@
 #the orders, training rmse, and forecast rmse for each method
 setwd("~/Desktop/bayes_arma")
 source("all_code_get_results.R")
-rp = 5; rq = 3;  #change these to test different series
+rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 num_series = 1
 samp_size = 125
 nois = 1
-vs = gen_series(num_series,samp_size,nois, rp,rq)
+#vs = gen_series(num_series,samp_size,nois, rp,rq)
 # saving vs, do for each rp and rq
-saveRDS(vs,file='ev3_other_approaches_series_53') # change file name!!!
+vs = readRDS("init_test_method_series_21")
+#saveRDS(vs,file='ev5_other_approaches_series_86') # change file name!!!
 
 
 ################# Bayes ARMA #############################
@@ -41,8 +42,8 @@ for(i in 1:length(vs)){
   lag_terms = get_coeffs(best_params, bp, bq)
   results55[[i]] = list(mat = ev, res = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms))
 }
-saveRDS(results55,file='ev3_BARMA_approach_53') # change file name!!!
-
+#saveRDS(results55,file='ev5_BARMA_approach_86') # change file name!!!
+saveRDS(results55,file='iter_BARMA_0init_21')
 ################# Maximum Likelihood Estimation #########################
 results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
@@ -53,7 +54,7 @@ for(i in 1:length(vs)){
   mlos = mle_arma(x)
   results55[[i]] = list(mat = mlos$mat, res = c(proc.time()[3] - pt, mlos$ords, fitted_acc(x,y,mlos$ords[1],mlos$ords[2],rp,rq), mlos$coeffs))
 }
-saveRDS(results55,file='ev3_MLE_approach_53') # change file name!!!
+saveRDS(results55,file='ev5_MLE_approach_86') # change file name!!!
 
 
 ################# Cross Validation (OFCV) #########################
@@ -66,7 +67,7 @@ for(i in 1:length(vs)){
   cvos = ofcv_arma(x)
   results55[[i]] = list(mat = cvos$mat, res = c(proc.time()[3] - pt, cvos$ords, fitted_acc(x,y,cvos$ords[1],cvos$ords[2],rp,rq), cvos$coeffs))
 }
-saveRDS(results55,file='ev3_OFCV_approach_53') # change file name!!!
+saveRDS(results55,file='ev5_OFCV_approach_86') # change file name!!!
 
 
 ################# IC based methods #############################
@@ -82,7 +83,7 @@ for(i in 1:length(vs)){
   
   results55[[i]] = list(mat = aicos$mat, res = c(proc.time()[3] - pt, aicos$ords[1], aicos$ords[2], fitted_acc(x,y,aicos$ords[1],aicos$ords[2],rp,rq), aicos$coeffs))
 }
-saveRDS(results55,file='ev3_aic_approach_53') # change file name!!!
+saveRDS(results55,file='ev5_aic_approach_86') # change file name!!!
 
 results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
@@ -96,7 +97,7 @@ for(i in 1:length(vs)){
   
   results55[[i]] = list(mat = aiccos$mat, res = c(proc.time()[3] - pt, aiccos$ords[1], aiccos$ords[2], fitted_acc(x,y,aiccos$ords[1],aiccos$ords[2],rp,rq), aiccos$coeffs))
 }
-saveRDS(results55,file='ev3_aicc_approach_53') # change file name!!!
+saveRDS(results55,file='ev5_aicc_approach_86') # change file name!!!
 
 results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
@@ -110,5 +111,5 @@ for(i in 1:length(vs)){
   
   results55[[i]] = list(mat = bicos$mat, res = c(proc.time()[3] - pt, bicos$ords[1], bicos$ords[2], fitted_acc(x,y,bicos$ords[1],bicos$ords[2],rp,rq), bicos$coeffs))
 }
-saveRDS(results55,file='ev3_bic_approach_53') # change file name!!!
+saveRDS(results55,file='ev5_bic_approach_86') # change file name!!!
 
