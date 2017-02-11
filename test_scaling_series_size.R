@@ -6,7 +6,7 @@ rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 
 #Change this to set the size of the time series
-sampls = c(125, 625, 1875)
+sampls = c(125, 250)
 nums = 10
 
 v_temp = gen_series(nums, sampls[length(sampls)], 1, rp,rq)
@@ -27,10 +27,10 @@ saveRDS(vs,file='scaling2_sampsize_method_series_21') # change file name!!!
 ################# Bayes ARMA #############################
 results55 <- vector("list", length(sampls))
 for(i in 1:nums){
-  print(sampls[i])
+  print(i)
   results5 <- vector("list", length(nums))
   for(j in 1:length(sampls)){
-    print(j)
+    print(sampls[j])
     pt <- proc.time()[3]
     ev = matrix(-Inf,maxp+1,maxq+1)
     x = vs[[i]][[j]]$series

@@ -15,10 +15,10 @@ saveRDS(vs,file='scaling2_variance_method_series_21') # change file name!!!
 ################# Bayes ARMA #############################
 results55 <- vector("list", length(noiss))
 for(i in 1:nums){
-  print(noiss[i])
+  print(i)
   results5 <- vector("list", length(nums))
   for(j in 1:length(noiss)){
-    print(j)
+    print(noiss[j])
     pt <- proc.time()[3]
     ev = matrix(-Inf,maxp+1,maxq+1)
     print(i)
