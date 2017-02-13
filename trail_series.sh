@@ -1,6 +1,45 @@
-################# Scaling the number of data points ############################
-#This file creates nums number of series of size sampls and evaluates all methods
-#setwd("~/Desktop/bayes_arma")
+
+#!/bin/bash
+# Telling how many nodes and processors should be used.
+#PBS -l nodes=1:ppn=8
+# Naming the file
+#PBS -N exp170128
+# Outputting error
+#PBS -j oe
+# Not sure what the two next lines do
+#PBS -q default
+#PBS -S /bin/bash
+#PBS -m abe
+#PBS -M yz793@cornell.edu
+
+######## I WONDER IF I NEED THIS LINE ######
+cd $PBS_O_WORKDIR
+
+# Telling cluster that you are using R
+R --vanilla > tss215000.out <<EOF
+
+# Looking for what machines are available to use.
+#library(snowfall)
+# library(snow)
+#pbsnodefile = Sys.getenv("PBS_NODEFILE")
+#machines <- scan(pbsnodefile, what="")
+#print(machines)
+#nmach = length(machines)
+#nmach
+
+# Initializing the nodes
+s#fInit(parallel=TRUE,type='SOCK',cpus=nmach,socketHosts=machines)
+
+
+#################################################################################
+#  All of the above 'R --vanilla...' is for the cluster
+#  All of the below 'R --vanilla...' is an R file
+#  This is the beginning of a 'regular' R file
+#################################################################################
+#sfSource('lib.R')
+
+######## HERE BEGINS THE SIMULATION ########
+
 setwd("/home/fs01/ss3349/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
@@ -146,3 +185,5 @@ for(i in 1:nums){
 }
 saveRDS(results55,file='bic3_scaling_size_21') # change file name!!!
 
+
+EOF
