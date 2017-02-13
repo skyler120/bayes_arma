@@ -78,6 +78,7 @@ muts_bpbq <- function(phir,pis){
 #############################  Function for logp ###############################################
 
 logp <- function(params){
+  #print(x)
   n = length(x)
   poq = max(p,q)
   phir = 0
