@@ -8,6 +8,8 @@ maxp = 10; maxq = 10;
 num_series = 25
 samp_size = 125
 nois = 1
+starting = 3
+starting_vec = c(1,5,9)
 #vs = gen_series(num_series,samp_size,nois, rp,rq)
 vs = readRDS('other_approaches_series_86')
 ##################Stepwise bayesian ############################
@@ -26,7 +28,10 @@ for(i in 1:length(vs)){
   m = which(ev == max(ev), arr.ind = TRUE)
   curr = c(m[1,1]-1, m[1,2]-1)
   curr_val = ev[curr[1]+1, curr[2]+2]
-  
+  #p=starting_vec[starting]; q=starting_vec[starting]; 
+  #ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
+  #curr = c(p,q)
+  #curr_val = ev[p+1,q+1]
   #step 2
   count = 0
   params_list = numeric(16)
@@ -37,7 +42,7 @@ for(i in 1:length(vs)){
     count = 0;
     for(j in 1:(length(params_list)/2)){
       p = params_list[(2*j-1)]; q = params_list[(2*j)];
-      if(p>0 && q>0){
+      if(p>=0 && q>=0 && p<=10 && q<=10){
         if(ev[p+1,q+1] == -Inf) {ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm}
         if(ev[p+1, q+1]> curr_val){
           curr = c(p,q)
@@ -49,9 +54,9 @@ for(i in 1:length(vs)){
       else{count = count+1}
     }
   }
-  results55[[i]] = c(proc.time()[3] - pt, curr)
+  results55[[i]] = c(proc.time()[3] - pt, curr, fitted_acc(x,y,curr[1],curr[2],rp,rq))
 }
-saveRDS(results55,file='BARMA_stepwise_86') # change file name!!!
+saveRDS(results55,file='BARMA_stepwise2_86') # change file name!!!
 
 ################# Full BARMA #############################
 # results55 <- vector("list", length(vs))
