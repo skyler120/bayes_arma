@@ -1,7 +1,8 @@
 ################# Basic comparison of algorithm for each of different approaches #############################
 #This file creates 25 series of orders rp and rq and outputs 
 #the orders, training rmse, and forecast rmse for each method
-setwd("~/Desktop/bayes_arma")
+#setwd("~/Desktop/bayes_arma")
+setwd("/home/fs01/ss3349/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
@@ -14,47 +15,47 @@ vs = readRDS('other_approaches_series_21')
 #saveRDS(vs,file='other_approaches_series_21') # change file name!!!
 
 
-# ################# Bayes ARMA #############################
-# results55 <- vector("list", length(vs))
-# for(i in 1:length(vs)){
-#   pt <- proc.time()[3]
-#   print(i)
-#   ev = matrix(-Inf,maxp+1,maxq+1)
-#   x = vs[[i]]$series
-#   y = vs[[i]]$forc
-#   #run our algorithm
-#   prev_pdm = -Inf
-#   best_params = NULL
-#   for(p in 0:maxp){
-#     for(q in 0:maxq){
-#       initialize = rep(0,p+q+1)
-#       bayes_ar_res = bayes_arima(x,y,p,q, initialize)
-#       ev[p+1,q+1] = bayes_ar_res$pdm
-#       if(ev[p+1, q+1]> prev_pdm){
-#         prev_pdm = ev[p+1, q+1]
-#         best_params = bayes_ar_res$transformed_params
-#       }
-#     }
-#   }
-#   m = which(ev == max(ev), arr.ind = TRUE)
-#   bp = m[1,1] - 1
-#   bq = m[1,2] - 1
-#   lag_terms = get_coeffs(best_params, bp, bq)
-#   results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
-# }
-# saveRDS(results55,file='BARMA_approach_21') # change file name!!!
-# 
-# ################# Maximum Likelihood Estimation #########################
-# results55 <- vector("list", length(vs))
-# for(i in 1:length(vs)){
-#   pt <- proc.time()[3]
-#   print(i)
-#   x = vs[[i]]$series
-#   y = vs[[i]]$forc
-#   mlos = mle_arma(x)
-#   results55[[i]] = c(proc.time()[3] - pt, mlos$ords, fitted_acc(x,y,mlos$ords[1],mlos$ords[2],rp,rq), mlos$coeffs)
-# }
-# saveRDS(results55,file='MLE_approach_21') # change file name!!!
+################# Bayes ARMA #############################
+results55 <- vector("list", length(vs))
+for(i in 1:length(vs)){
+  pt <- proc.time()[3]
+  print(i)
+  ev = matrix(-Inf,maxp+1,maxq+1)
+  x = vs[[i]]$series
+  y = vs[[i]]$forc
+  #run our algorithm
+  prev_pdm = -Inf
+  best_params = NULL
+  for(p in 0:maxp){
+    for(q in 0:maxq){
+      initialize = rep(0,p+q+1)
+      bayes_ar_res = bayes_arima(x,y,p,q, initialize)
+      ev[p+1,q+1] = bayes_ar_res$pdm
+      if(ev[p+1, q+1]> prev_pdm){
+        prev_pdm = ev[p+1, q+1]
+        best_params = bayes_ar_res$transformed_params
+      }
+    }
+  }
+  m = which(ev == max(ev), arr.ind = TRUE)
+  bp = m[1,1] - 1
+  bq = m[1,2] - 1
+  lag_terms = get_coeffs(best_params, bp, bq)
+  results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
+}
+saveRDS(results55,file='BARMA_approach_21') # change file name!!!
+
+################# Maximum Likelihood Estimation #########################
+results55 <- vector("list", length(vs))
+for(i in 1:length(vs)){
+  pt <- proc.time()[3]
+  print(i)
+  x = vs[[i]]$series
+  y = vs[[i]]$forc
+  mlos = mle_arma(x)
+  results55[[i]] = c(proc.time()[3] - pt, mlos$ords, fitted_acc(x,y,mlos$ords[1],mlos$ords[2],rp,rq), mlos$coeffs)
+}
+saveRDS(results55,file='MLE_approach_21') # change file name!!!
 
 
 ################# Cross Validation (OFCV) #########################

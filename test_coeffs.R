@@ -8,7 +8,7 @@ nois = 1
 vs = gen_series(num_series,samp_size,nois, rp,rq)
 # saving vs, do for each rp and rq
 #vs = readRDS("init_test_method_series_21")
-saveRDS(vs,file='test_coeffs_11') # change file name!!!
+saveRDS(vs,file='test2_coeffs_11') # change file name!!!
 
 results55 <- vector("list", length(vs))
 for(i in 1:length(vs)){
@@ -37,4 +37,4 @@ for(i in 1:length(vs)){
   lag_terms = get_coeffs(best_params, bp, bq)
   results55[[i]] = list(mat = ev, res = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms))
 }
-saveRDS(results55,file='BARMA_test_coeff_21')
+saveRDS(results55,file='BARMA2_test_coeff_11')
