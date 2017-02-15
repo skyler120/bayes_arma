@@ -147,7 +147,7 @@ plotlag = function(res, methodname){
   df = data.frame(diff = c(diffp,diffq), ord = c(rep('p',25),rep('q',25)))
   ggplot(data=df, aes(diff,fill=factor(ord))) +
     geom_bar(position='dodge') +
-    ylim(0,20) +
+    ylim(0,15) +
     theme(text=element_text(size=15),
           plot.title=element_text(hjust=0.5),
           legend.position = 'none') +
@@ -168,6 +168,21 @@ lag_bic21 = plotlag(bic21, 'BIC')
 # red p, blue q
 grid.arrange(lag_abarma21, lag_cv21, lag_mle21, 
              lag_aic21, lag_aicc21, lag_bic21, ncol=3)
+
+### stepwise algorithm
+abarma21s = readRDS('BARMA_stepwise4_21')
+pp = 2; qq=1
+lag_abarma21s = plotlag(abarma21s, '')
+
+abarma53s = readRDS('BARMA_stepwise4_53')
+pp = 5; qq = 3
+lag_abarma53s = plotlag(abarma53s, '')
+
+abarma86s = readRDS('BARMA_stepwise4_86')
+pp = 8; qq = 6
+lag_abarma86s = plotlag(abarma86s, '')
+
+grid.arrange(lag_abarma21s, lag_abarma53s, lag_abarma86s, ncol=3)
 
 ### using results from multiple ts
 # plots true model fit error - model fit error for each method
