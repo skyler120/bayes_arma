@@ -3,7 +3,7 @@
 # Telling how many nodes and processors should be used.
 #PBS -l nodes=1:ppn=8
 # Naming the file
-#PBS -N scalingseries5-2
+#PBS -N scalingseries-rt-1-2
 # Outputting error
 #PBS -j oe
 # Not sure what the two next lines do
@@ -16,7 +16,7 @@
 cd $PBS_O_WORKDIR
 
 # Telling cluster that you are using R
-R --vanilla > tss215000_5_2.out <<EOF
+R --vanilla > ss-rt-2.out <<EOF
 
 # Looking for what machines are available to use.
 setwd("/home/fs01/ss3349/bayes_arma")
@@ -59,29 +59,32 @@ rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 
 #Change this to set the size of the time series
-sampls = c(125, 250, 625, 1250, 2500, 6250)
-nums = 5
-
-v_temp = gen_series(nums, sampls[length(sampls)], 1, rp,rq)
+sampls = c(125, 250, 625, 1250, 6250, 12500)
+nums = 1
+sampls = c(12500)
+#v_temp = gen_series(nums, sampls[length(sampls)], 1, rp,rq)
+v_temp = readRDS('scaline13_full_sampsize_method_series_21')
 vs <- vector("list", nums)
 for(i in 1:nums){
   v_samps <- vector("list", length(sampls))
   v_samps[[length(sampls)]] = v_temp[[i]]
-  for(samp in 1:(length(sampls)-1)){
-        n = sampls[samp]
-        train = floor(0.8*n)
-        v_samps[[samp]] = list(series = v_temp[[i]][["series"]][1:train], forc = v_temp[[i]][["forc"]][1:(n-train)], p = v_temp[[i]][["p"]], q = v_temp[[i]][["q"]])
-  }
+  #for(samp in 1:(length(sampls)-1)){
+  #      n = sampls[samp]
+  #      train = floor(0.8*n)
+  #      v_samps[[samp]] = list(series = v_temp[[i]][["series"]][1:train], forc = v_temp[[i]][["forc"]][1:(n-train)], p = v_temp[[i]][["p"]], q = v_temp[[i]][["q"]])
+  #}
   vs[[i]] = v_samps
 }
 # saving vs, do for each rp and rq
-saveRDS(vs,file='scaling5_sampsize_method_series_21') # change file name!!!
+saveRDS(vs,file='scaling14_sampsize_method_series_21') # change file name!!!
+#sampls = c(125,250,625,1250,6250)
+
 
 ################# Bayes ARMA #############################
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
   print(i)
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     print(sampls[j])
     pt <- proc.time()[3]
@@ -110,15 +113,15 @@ for(i in 1:nums){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='BARMA5_scaling_size_21') # change file name!!!
+saveRDS(results55,file='BARMA14_scaling_size_21') # change file name!!!
 
 # saving results55, do for each rp and rq
 #saveRDS(results55,file='scaling_sampsize_method_results_21') # change file name!!!
 
 ################# Maximum Likelihood Estimation #########################
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
@@ -129,14 +132,14 @@ for(i in 1:nums){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='MLE5_scaling_size_21') # change file name!!!
+saveRDS(results55,file='MLE14_scaling_size_21') # change file name!!!
 
 
 ################# Cross Validation (OFCV) #########################
 #based on forecast accuracy iteratively and find the lowest forecast on a held out set 
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
@@ -147,13 +150,13 @@ for(i in 1:nums){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='OFCV5_scaling_size_21') # change file name!!!
+saveRDS(results55,file='OFCV14_scaling_size_21') # change file name!!!
 
 
 ################# IC based methods #############################
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
@@ -166,11 +169,11 @@ for(i in 1:nums){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='aic5_scaling_size_21') # change file name!!!
+saveRDS(results55,file='aic14_scaling_size_21') # change file name!!!
 
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
@@ -178,16 +181,16 @@ for(i in 1:nums){
     y = vs[[i]][[j]][["forc"]]
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aicc", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     aiccp = a[["arma"]][1]
-    aiccq = a[["arma]][2]
+    aiccq = a[["arma"]][2]
     results5[[j]] = c(proc.time()[3] - pt, aiccp, aiccq, fitted_acc(x,y,aiccp,aiccq,rp,rq), a[["sigma2"]], a[["coef"]])
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='aicc5_scaling_size_21') # change file name!!!
+saveRDS(results55,file='aicc14_scaling_size_21') # change file name!!!
 
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
@@ -200,7 +203,7 @@ for(i in 1:nums){
   }
   results55[[i]] = results5
 }
-saveRDS(results55,file='bic5_scaling_size_21') # change file name!!!
+saveRDS(results55,file='bic14_scaling_size_21') # change file name!!!
 
 
 EOF
