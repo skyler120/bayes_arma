@@ -281,21 +281,29 @@ ggplot(vardf.m, aes(Method, Accuracy)) +
 
 # plots approximation results with increasing length
 
-abarma_len = readRDS('BARMA2_scaling_size_21')
-cv_len = readRDS('OFCV2_scaling_size_21')
-mle_len = readRDS('MLE2_scaling_size_21')
-aic_len = readRDS('aic2_scaling_size_21')
-aicc_len = readRDS('aicc2_scaling_size_21')
-bic_len = readRDS('bic2_scaling_size_21')
+# setwd('/home/wenyu/Desktop/Cornell/Class/ORIE 6741/Results/scaling_res_v2')
+
+abarma_var8 = readRDS('bic8_scaling_size_21')
+abarma_var9 = readRDS('bic9_scaling_size_21')
+abarma_var10 = readRDS('bic10_scaling_size_21')
+abarma_var11 = readRDS('bic11_scaling_size_21')
+abarma_var12 = readRDS('bic12_scaling_size_21')
+
+abarma_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
+cv_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
+mle_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
+aic_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
+aicc_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
+bic_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
 
 lendf = data.frame(Method=c('ABARMA','Cross-validation','MLE','AIC','AICc','BIC'),
-                   'L100'=numeric(6), 'L200'=numeric(6))
-lendf[1,2:3]=rowSums(sapply(abarma_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
-lendf[2,2:3]=rowSums(sapply(cv_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
-lendf[3,2:3]=rowSums(sapply(mle_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
-lendf[4,2:3]=rowSums(sapply(aic_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
-lendf[5,2:3]=rowSums(sapply(aicc_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
-lendf[6,2:3]=rowSums(sapply(bic_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
+                   'L100'=numeric(6), 'L200'=numeric(6), 'L500'=numeric(6), 'L1000'=numeric(6))
+lendf[1,2:5]=rowSums(sapply(abarma_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
+lendf[2,2:5]=rowSums(sapply(cv_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
+lendf[3,2:5]=rowSums(sapply(mle_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
+lendf[4,2:5]=rowSums(sapply(aic_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
+lendf[5,2:5]=rowSums(sapply(aicc_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
+lendf[6,2:5]=rowSums(sapply(bic_len, function(i){return((sapply(i, function(x){return(x[2]==2 & x[3]==1)})))})/10)
 lendf.m = melt(lendf, id.vars='Method')
 colnames(lendf.m) = c('Method','Length','Accuracy')
 lendf.m$Method = factor(lendf.m$Method, levels=c('ABARMA','Cross-validation','MLE','AIC','AICc','BIC'))
