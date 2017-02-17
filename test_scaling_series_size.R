@@ -1,14 +1,14 @@
 ################# Scaling the number of data points ############################
 #This file creates nums number of series of size sampls and evaluates all methods
-#setwd("~/Desktop/bayes_arma")
-setwd("/home/fs01/ss3349/bayes_arma")
+setwd("~/Desktop/bayes_arma")
+#setwd("/home/fs01/ss3349/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 
 #Change this to set the size of the time series
-sampls = c(125, 250, 500, 1000, 2000, 5000)
-nums = 10
+sampls = c(125, 250, 625, 1250, 2500, 6250)
+nums = 1
 
 v_temp = gen_series(nums, sampls[length(sampls)], 1, rp,rq)
 vs <- vector("list", nums)
@@ -24,12 +24,12 @@ for(i in 1:nums){
 }
 # saving vs, do for each rp and rq
 saveRDS(vs,file='scaling3_sampsize_method_series_21') # change file name!!!
-
+sampls = c(125,250,625,1250,2500)
 ################# Bayes ARMA #############################
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
   print(i)
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     print(sampls[j])
     pt <- proc.time()[3]
@@ -64,9 +64,9 @@ saveRDS(results55,file='BARMA3_scaling_size_21') # change file name!!!
 #saveRDS(results55,file='scaling_sampsize_method_results_21') # change file name!!!
 
 ################# Maximum Likelihood Estimation #########################
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
@@ -82,13 +82,14 @@ saveRDS(results55,file='MLE3_scaling_size_21') # change file name!!!
 
 ################# Cross Validation (OFCV) #########################
 #based on forecast accuracy iteratively and find the lowest forecast on a held out set 
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     cvos = ofcv_arma(x)
     results5[[j]] = c(proc.time()[3] - pt, cvos$ords, fitted_acc(x,y,cvos$ords[1],cvos$ords[2],rp,rq), cvos$coeffs)
   }
@@ -98,13 +99,14 @@ saveRDS(results55,file='OFCV3_scaling_size_21') # change file name!!!
 
 
 ################# IC based methods #############################
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     aicp = a$arma[1]
     aicq = a$arma[2]
@@ -114,13 +116,14 @@ for(i in 1:nums){
 }
 saveRDS(results55,file='aic3_scaling_size_21') # change file name!!!
 
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aicc", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     aiccp = a$arma[1]
     aiccq = a$arma[2]
@@ -130,13 +133,14 @@ for(i in 1:nums){
 }
 saveRDS(results55,file='aicc3_scaling_size_21') # change file name!!!
 
-results55 <- vector("list", length(sampls))
+results55 <- vector("list", nums)
 for(i in 1:nums){
-  results5 <- vector("list", length(nums))
+  results5 <- vector("list", length(sampls))
   for(j in 1:length(sampls)){
     pt <- proc.time()[3]
     print(i)
     x = vs[[i]][[j]]$series
+    y = vs[[i]][[j]]$forc
     a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="bic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
     bicp = a$arma[1]
     bicq = a$arma[2]

@@ -10,7 +10,7 @@ num_series = 25
 samp_size = 125
 nois = 1
 #vs = gen_series(num_series,samp_size,nois, rp,rq)
-vs = readRDS('other_approaches_series_21')
+vs = readRDS('other_approaches_series_53')
 # saving vs, do for each rp and rq
 #saveRDS(vs,file='other_approaches_series_21') # change file name!!!
 
