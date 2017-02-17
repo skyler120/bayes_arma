@@ -1,9 +1,9 @@
 ################# Stepwise implementation of ABARMA #############################
-#setwd("~/Desktop/Cornell/ORIE 6741/bayes_arma")
-setwd("~/Desktop/bayes_arma")
+setwd("~/Desktop/Cornell/ORIE 6741/bayes_arma")
+#setwd("~/Desktop/bayes_arma")
 source("all_code_get_results.R")
 #initialize
-rp = 2; rq = 1;  #change these to test different series
+rp = 8; rq = 6;  #change these to test different series
 maxp = 10; maxq = 10;
 num_series = 25
 samp_size = 125
@@ -21,17 +21,17 @@ for(i in 1:length(vs)){
   y = vs[[i]]$forc
   
   #step 1 initialization
-  p = 2; q = 2; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
-  p = 0; q = 0; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
-  p = 1; q = 0; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
-  p = 0; q = 1; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
-  m = which(ev == max(ev), arr.ind = TRUE)
-  curr = c(m[1,1]-1, m[1,2]-1)
-  curr_val = ev[curr[1]+1, curr[2]+2]
-  #p=starting_vec[starting]; q=starting_vec[starting]; 
-  #ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
-  #curr = c(p,q)
-  #curr_val = ev[p+1,q+1]
+#   p = 2; q = 2; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
+#   p = 0; q = 0; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
+#   p = 1; q = 0; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
+#   p = 0; q = 1; ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
+#   m = which(ev == max(ev), arr.ind = TRUE)
+#   curr = c(m[1,1]-1, m[1,2]-1)
+#   curr_val = ev[curr[1]+1, curr[2]+2]
+  p=starting_vec[starting]; q=starting_vec[starting]; 
+  ev[p+1,q+1] = bayes_arima(x,y,p,q,rep(0,p+q+1))$pdm;
+  curr = c(p,q)
+  curr_val = ev[p+1,q+1]
   #step 2
   count = 0
   params_list = numeric(16)
