@@ -7,7 +7,7 @@ rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 
 #Change this to set the size of the time series
-sampls = c(125, 250, 625, 1250, 2500, 6250)
+sampls = c(125, 250, 375, 500, 625)
 nums = 1
 
 v_temp = gen_series(nums, sampls[length(sampls)], 1, rp,rq)

@@ -1,19 +1,24 @@
-#setwd("~/Desktop/bayes_arma")
-setwd("~/Desktop/Cornell/ORIE 6741/bayes_arma")
+setwd("~/Desktop/bayes_arma")
+#setwd("~/Desktop/Cornell/ORIE 6741/bayes_arma")
 source("all_code_get_results.R")
 maxp = 10; maxq = 10;
-#sp500 = read.csv("number-of-earthquakes-per-year-m.csv")
-sp500 = matrix(data = presidents, nrow = length(presidents)/4, ncol=4, byrow = T)
+sp500 = read.csv("number-of-earthquakes-per-year-m.csv")
+#sp500 = matrix(data = EuStockMarkets, nrow = length(EuStockMarkets)/4, ncol=4, byrow = T)
 #sp500 = matrix(data=UKDriverDeaths, nrow = length(UKDriverDeaths)/12, ncol=12, byrow=T)
 #sp500 = matrix(data = UKgas, nrow = length(UKgas)/4, ncol=4, byrow = T)
-#dat = sp500$Number.of.earthquakes.per.year.magnitude.7.0.or.greater..1900.1998
+dat = sp500$Number.of.earthquakes.per.year.magnitude.7.0.or.greater..1900.1998
 #dat = rowMeans(sp500,na.rm=T)
-dat = as.vector(LakeHuron)
+# dat = numeric(length(EuStockMarkets)/4)
+# for(j in 1:(length(EuStockMarkets)/4)){
+#   dat[j] = EuStockMarkets[j,3]
+# }
+# dat =  dat[1:1000]
+#dat = as.vector(LakeHuron)
 train_split = floor(0.8*length(dat))
 x = dat[1:train_split] 
 mx = mean(x)
 x = x - mx
-y = dat[(train_split+1):length(data)]
+y = dat[(train_split+1):length(dat)]
 ev = matrix(-Inf,maxp+1,maxq+1)
 
 ######################## bayes arima #######################
@@ -35,7 +40,7 @@ bp = m[1,1] - 1
 bq = m[1,2] - 1
 lag_terms = get_coeffs(best_params, bp, bq)
 res_barma = list(mat = ev, res = c(bp, bq, rfitted_acc(x,y,bp,bq, mx), lag_terms))
-saveRDS(res_barma, "pres_barma")
+saveRDS(res_barma, "eu_barma")
 
 ######################## MLE, CV arima #######################
 mlos = mle_arma(x)
@@ -43,29 +48,30 @@ res_mle = list(mat = mlos$mat, res = c(mlos$ords, rfitted_acc(x,y,mlos$ords[1],m
 saveRDS(res_mle, "pres_mle")
 cvos = ofcv_arma(x)
 res_cv = list(mat = cvos$mat, res = c(cvos$ords, rfitted_acc(x,y,cvos$ords[1],cvos$ords[2],mx), cvos$coeffs))
-saveRDS(res_cv, "pres_cv")
+saveRDS(res_cv, "eu_cv")
 
 ######################## IC auto.arima #######################
 a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
 aicp = a$arma[1]
 aicq = a$arma[2]
 res_aic = c(aicp, aicq, rfitted_acc(x,y,aicp,aicq,mx), a$sigma2, a$coef)
-saveRDS(res_aic, "pres_aic")
+saveRDS(res_aic, "eu_aic")
 
 a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="aicc", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
 aiccp = a$arma[1]
 aiccq = a$arma[2]
 res_aicc = c(aiccp, aiccq, rfitted_acc(x,y,aiccp,aiccq,mx), a$sigma2, a$coef)
-saveRDS(res_aic, "pres_aicc")
+saveRDS(res_aic, "eu_aicc")
 
 a = auto.arima(x, d=0, max.p=maxp, max.q = maxq, allowmean = F, allowdrift = F, approximation = F, ic="bic", stepwise = F, max.order=maxp + maxq, stationary = T, seasonal = F)
 bicp = a$arma[1]
 bicq = a$arma[2]
 res_bic = c(bicp, bicq, rfitted_acc(x,y,bicp,bicq,mx), a$sigma2, a$coef)
-saveRDS(res_bic,  "pres_bic")
+saveRDS(res_bic,  "eu_bic")
 
 ################ Fitted Acc ############
 rfitted_acc <- function(x, y, bp, bq, mx){
+  y = na.omit(y)
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
   rmse_bayes_x  = sqrt(sum((barima_x1$residuals)^2  ) / length(x))
   fbx = forecast(barima_x1, h=length(y))

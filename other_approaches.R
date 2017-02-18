@@ -1,16 +1,16 @@
 ################# Basic comparison of algorithm for each of different approaches #############################
 #This file creates 25 series of orders rp and rq and outputs 
 #the orders, training rmse, and forecast rmse for each method
-#setwd("~/Desktop/bayes_arma")
-setwd("/home/fs01/ss3349/bayes_arma")
+setwd("~/Desktop/bayes_arma")
+#setwd("/home/fs01/ss3349/bayes_arma")
 source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
-num_series = 25
-samp_size = 125
+num_series = 1
+samp_size = 875
 nois = 1
-#vs = gen_series(num_series,samp_size,nois, rp,rq)
-vs = readRDS('other_approaches_series_53')
+vs = gen_series(num_series,samp_size,nois, rp,rq)
+#vs = readRDS('other_approaches_series_53')
 # saving vs, do for each rp and rq
 #saveRDS(vs,file='other_approaches_series_21') # change file name!!!
 
@@ -43,7 +43,7 @@ for(i in 1:length(vs)){
   lag_terms = get_coeffs(best_params, bp, bq)
   results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
 }
-saveRDS(results55,file='BARMA_approach_21') # change file name!!!
+saveRDS(results55,file='BARMA117_approach_21') # change file name!!!
 
 ################# Maximum Likelihood Estimation #########################
 results55 <- vector("list", length(vs))

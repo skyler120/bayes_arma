@@ -1,8 +1,4 @@
 require(forecast)
-require(cubature)
-require(GenSA)
-require(ggplot2)
-require(numDeriv)
 
 ############################# Recursive Function for phi and pi ###############################################
 
@@ -250,6 +246,14 @@ logf_neg = function(params){
 }
 
 ############### Compute Accuracy ###############
+rfitted_acc <- function(x, y, bp, bq, mx){
+  y = na.omit(y)
+  barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
+  rmse_bayes_x  = sqrt(sum((barima_x1$residuals)^2  ) / length(x))
+  fbx = forecast(barima_x1, h=length(y))
+  trmse_bayes_x  = sqrt(sum((y-fbx$mean - mx)^2  ) / length(y))
+  return(c(rmse_bayes_x, trmse_bayes_x))
+}
 
 fitted_acc <- function(x, y, bp, bq, rp, rq){
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")

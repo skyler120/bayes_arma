@@ -1,5 +1,3 @@
 # bayes_arma
 
-Important code for function methods/simulation is located in all_code_get_results.
-gen_plots creates images from simulated results
-real_data_results runs method on real datasets
+This repository contains all files for experiments and algorithms for ABARMA.  To try the algorithm on your own dataset, please use the demo_bayes_arma.R file and change the series and other parameters at the start of the file.
