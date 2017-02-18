@@ -7,7 +7,7 @@ source("all_code_get_results.R")
 rp = 2; rq = 1;  #change these to test different series
 maxp = 10; maxq = 10;
 num_series = 1
-samp_size = 875
+samp_size = 1250
 nois = 1
 vs = gen_series(num_series,samp_size,nois, rp,rq)
 #vs = readRDS('other_approaches_series_53')
@@ -43,7 +43,7 @@ for(i in 1:length(vs)){
   lag_terms = get_coeffs(best_params, bp, bq)
   results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
 }
-saveRDS(results55,file='BARMA117_approach_21') # change file name!!!
+saveRDS(results55,file='BARMA110_approach_21') # change file name!!!
 
 ################# Maximum Likelihood Estimation #########################
 results55 <- vector("list", length(vs))

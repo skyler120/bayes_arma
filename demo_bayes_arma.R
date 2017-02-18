@@ -11,10 +11,11 @@ setwd("~/bayes_arma") #set the working directory - default will be home director
 source("all_code_get_results.R")                                                       #
 #                                                                                      #
 #                                                                                      #                            
+s = arima.sim(125,list(ar=c(0.48, -0.8), ma=c(0.2), sd=1))
 #set this variable with the univariate time series you want to fit                     #
-x =                                                                                    #
+x =    s[1:100]                                                                                #
 #set this variable with the univariate time series you want to forecast                #
-y =                                                                                    #
+y =       s[101:125]                                                                             #
 #                                                                                      #
 #                                                                                      #
 maxp = 10; maxq = 10; #you may update these if you would like to search beyond 10      #
@@ -87,4 +88,4 @@ saveRDS(res_barma, results_file_name)
     }
   }
   res_step_barma = list(mat = ev, orders = curr, acc = rfitted_acc(x,y,curr[1],curr[2], mx))
-  saverDS(res_step_barma, paste("step_", results_file_name, sep=""))
+  saveRDS(res_step_barma, paste("step_", results_file_name, sep=""))
