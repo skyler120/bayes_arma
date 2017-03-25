@@ -279,15 +279,48 @@ ggplot(vardf.m, aes(Method, Accuracy)) +
   theme(text=element_text(size=15)) +
   geom_bar(aes(fill = Noise), position = "dodge", stat="identity")
 
+# second plot for results with increasing noise
+
+abarma_pq = matrix(0, 3, 10) # dist (at noise level)
+cv_pq = matrix(0, 3, 10)
+mle_pq = matrix(0, 3, 10)
+aic_pq = matrix(0, 3, 10)
+aicc_pq = matrix(0, 3, 10)
+bic_pq = matrix(0, 3, 10)
+df_pq = abarma_pq; df = abarma_var
+for (i in 1:10){
+  for (j in 1:3){
+    df_pq[j,i] = abs(df[[i]][[j]][2]-2) + abs(df[[i]][[j]][3]-1) # p ,q
+  }
+}
+abarma_pq = df_pq
+
+vardf2 = data.frame(Method=rep(c('ABARMA','Cross-validation','MLE','AIC','AICc','BIC'),each=3),
+                    Noise=rep(c('Low','Medium','High'),6),
+                    Mean=numeric(18), SE=numeric(18))
+vardf2$Mean = c(apply(abarma_pq,1,mean),apply(cv_pq,1,mean),apply(mle_pq,1,mean),
+                apply(aic_pq,1,mean),apply(aicc_pq,1,mean),apply(bic_pq,1,mean))
+vardf2$SE = c(apply(abarma_pq,1,sd),apply(cv_pq,1,sd),apply(mle_pq,1,sd),
+                apply(aic_pq,1,sd),apply(aicc_pq,1,sd),apply(bic_pq,1,sd))/sqrt(10)
+
+# Error bars represent standard error of the mean
+vardf2$Method = factor(vardf2$Method, levels=c('ABARMA','Cross-validation','MLE','AIC','AICc','BIC'))
+ggplot(vardf2, aes(x=Method, y=Mean, fill=Noise)) +
+  theme(text=element_text(size=15)) +
+  geom_bar(position=position_dodge(), stat="identity") +
+  geom_errorbar(aes(ymin=Mean-SE, ymax=Mean+SE),
+                width=.2,
+                position=position_dodge(.9))
+
 # plots approximation results with increasing length
 
 # setwd('/home/wenyu/Desktop/Cornell/Class/ORIE 6741/Results/scaling_res_v2')
 
-abarma_var8 = readRDS('bic8_scaling_size_21')
-abarma_var9 = readRDS('bic9_scaling_size_21')
-abarma_var10 = readRDS('bic10_scaling_size_21')
-abarma_var11 = readRDS('bic11_scaling_size_21')
-abarma_var12 = readRDS('bic12_scaling_size_21')
+abarma_var8 = readRDS('BARMA8_scaling_size_21')
+abarma_var9 = readRDS('BARMA9_scaling_size_21')
+abarma_var10 = readRDS('BARMA10_scaling_size_21')
+abarma_var11 = readRDS('BARMA11_scaling_size_21')
+abarma_var12 = readRDS('BARMA12_scaling_size_21')
 
 abarma_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
 cv_len = c(abarma_var8,abarma_var9,abarma_var10,abarma_var11,abarma_var12)
@@ -310,6 +343,39 @@ lendf.m$Method = factor(lendf.m$Method, levels=c('ABARMA','Cross-validation','ML
 ggplot(lendf.m, aes(Method, Accuracy)) +   
   theme(text=element_text(size=15)) +
   geom_bar(aes(fill = Length), position = "dodge", stat="identity")
+
+# second plot for results with increasing noise
+
+abarma_pq = matrix(0, 4, 10) # dist (at noise level)
+cv_pq = matrix(0, 4, 10)
+mle_pq = matrix(0, 4, 10)
+aic_pq = matrix(0, 4, 10)
+aicc_pq = matrix(0, 4, 10)
+bic_pq = matrix(0, 4, 10)
+df_pq = bic_pq; df = bic_len
+for (i in 1:10){
+  for (j in 1:4){
+    df_pq[j,i] = abs(df[[i]][[j]][2]-2) + abs(df[[i]][[j]][3]-1) # p ,q
+  }
+}
+bic_pq = df_pq
+
+vardf2 = data.frame(Method=rep(c('ABARMA','Cross-validation','MLE','AIC','AICc','BIC'),each=4),
+                    Length=rep(c('L100','L200','L500','L1000'),6),
+                    Mean=numeric(24), SE=numeric(24))
+vardf2$Mean = c(apply(abarma_pq,1,mean),apply(cv_pq,1,mean),apply(mle_pq,1,mean),
+                apply(aic_pq,1,mean),apply(aicc_pq,1,mean),apply(bic_pq,1,mean))
+vardf2$SE = c(apply(abarma_pq,1,sd),apply(cv_pq,1,sd),apply(mle_pq,1,sd),
+              apply(aic_pq,1,sd),apply(aicc_pq,1,sd),apply(bic_pq,1,sd))/sqrt(10)
+
+# Error bars represent standard error of the mean
+vardf2$Method = factor(vardf2$Method, levels=c('ABARMA','Cross-validation','MLE','AIC','AICc','BIC'))
+ggplot(vardf2, aes(x=Method, y=Mean, fill=Length)) +
+  theme(text=element_text(size=15)) +
+  geom_bar(position=position_dodge(), stat="identity") +
+  geom_errorbar(aes(ymin=Mean-SE, ymax=Mean+SE),
+                width=.2,
+                position=position_dodge(.9))
 
 # plots approximated coefficients
 a = readRDS('BARMA_test_coeff_21_v2')

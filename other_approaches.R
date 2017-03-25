@@ -41,7 +41,7 @@ for(i in 1:length(vs)){
   bp = m[1,1] - 1
   bq = m[1,2] - 1
   lag_terms = get_coeffs(best_params, bp, bq)
-  results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms)
+  results55[[i]] = c(proc.time()[3] - pt, bp, bq, fitted_acc(x,y,bp,bq,rp,rq), lag_terms, best_params)
 }
 saveRDS(results55,file='BARMA110_approach_21') # change file name!!!
 

@@ -255,7 +255,7 @@ rfitted_acc <- function(x, y, bp, bq, mx){
   return(c(rmse_bayes_x, trmse_bayes_x))
 }
 
-fitted_acc <- function(x, y, bp, bq, rp, rq){
+fitted_acc <- function(x, y, bp, bq, rp, rq, best_params){
   barima_x1 = arima(x, order=c(bp,0,bq), include.mean=F, method="ML")
   arima_x1 = arima(x, order = c(rp,0,rq), include.mean=F, method="ML")
   
@@ -263,8 +263,41 @@ fitted_acc <- function(x, y, bp, bq, rp, rq){
   rmse_bayes_x  = sqrt(sum((barima_x1$residuals)^2  ) / length(x))
   
   fax = forecast(arima_x1, h=length(y))
-  fbx = forecast(barima_x1, h=length(y))
-
+  
+  n = length(x)
+  h = length(y)
+  params2 = get_coeffs(best_params, bp, bq)
+  phis = params2[2:(1+bp)]
+  pis = params[(2+bp):(1+bp+bq)]
+  # find epsilons by solving a=Be for eps
+  a = numeric(n)
+  B = diag(n)
+  for (t in 1:n){
+    if (t<(bp+1)){
+      a[t] = x[t] - sum(phis[1:(t-1)]*x[(t-1):1])
+    }else{
+      a[t] = x[t] - sum(phis*x[(t-1):(t-bp)])
+    }
+  }
+  for (t in 2:n){
+    if (t<(bq+1)){
+      B[t, (t-1):1] = pis[1:(t-1)]
+    }else{
+      B[t, (t-1):(t-bq)] = pis
+    }
+  }
+  eps = qr.solve(B, a)
+  # forecasting
+  x_curr = x
+  e_curr = eps
+  fbx = numeric(h)
+  for (i in 1:h){
+    N = length(x_curr)
+    fbx[i] = sum(phis*x_curr[(N-1):(N-bp)]) + sum(pis*e_curr[(N-1):(N-nq)])
+    x_curr = c(x_curr,fbx[i])
+    e_curr = c(e_curr, 0)
+  }
+  
   trmse_auto_x  = sqrt(sum((y-fax$mean)^2  ) / length(y))
   trmse_bayes_x  = sqrt(sum((y-fbx$mean)^2  ) / length(y))
   return(c(rmse_auto_x, rmse_bayes_x, trmse_auto_x, trmse_bayes_x))
