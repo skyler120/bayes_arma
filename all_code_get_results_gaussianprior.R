@@ -267,25 +267,34 @@ fitted_acc <- function(x, y, bp, bq, rp, rq, best_params){
   n = length(x)
   h = length(y)
   params2 = get_coeffs(best_params, bp, bq)
-  phis = params2[2:(1+bp)]
-  pis = params2[(2+bp):(1+bp+bq)]
+  if (bp>0){
+    phis = params2[2:(1+bp)]    
+  }
+  if (bq>0){
+    pis = params2[(2+bp):(1+bp+bq)]    
+  }
   # find epsilons by solving a=Be for eps
-  a = numeric(n)
+  a = x
   B = diag(n)
-  for (t in 1:n){
-    if (t<(bp+1)){
-      a[t] = x[t] - sum(phis[1:(t-1)]*x[(t-1):1])
-    }else{
-      a[t] = x[t] - sum(phis*x[(t-1):(t-bp)])
+  if (bp>0){
+    for (t in 1:n){
+      if (t<(bp+1)){
+        a[t] = x[t] - sum(phis[1:(t-1)]*x[(t-1):1])
+      }else{
+        a[t] = x[t] - sum(phis*x[(t-1):(t-bp)])
+      }
+    }
+  } 
+  if (bq>0){
+    for (t in 2:n){
+      if (t<(bq+1)){
+        B[t, (t-1):1] = pis[1:(t-1)]
+      }else{
+        B[t, (t-1):(t-bq)] = pis
+      }
     }
   }
-  for (t in 2:n){
-    if (t<(bq+1)){
-      B[t, (t-1):1] = pis[1:(t-1)]
-    }else{
-      B[t, (t-1):(t-bq)] = pis
-    }
-  }
+
   eps = qr.solve(B, a)
   # forecasting
   x_curr = x
@@ -293,7 +302,15 @@ fitted_acc <- function(x, y, bp, bq, rp, rq, best_params){
   fbx = numeric(h)
   for (i in 1:h){
     N = length(x_curr)
-    fbx[i] = sum(phis*x_curr[(N-1):(N-bp)]) + sum(pis*e_curr[(N-1):(N-bq)])
+    if (bp==0 && bq==0){
+      fbx[i] = 0
+    }else if (bp==0){
+      fbx[i] = sum(pis*e_curr[(N-1):(N-bq)])
+    }else if (bq==0){
+      fbx[i] = sum(phis*x_curr[(N-1):(N-bp)])
+    }else{
+      fbx[i] = sum(phis*x_curr[(N-1):(N-bp)]) + sum(pis*e_curr[(N-1):(N-bq)])
+    }
     x_curr = c(x_curr,fbx[i])
     e_curr = c(e_curr, 0)
   }
