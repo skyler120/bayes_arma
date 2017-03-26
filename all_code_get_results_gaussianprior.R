@@ -268,7 +268,7 @@ fitted_acc <- function(x, y, bp, bq, rp, rq, best_params){
   h = length(y)
   params2 = get_coeffs(best_params, bp, bq)
   phis = params2[2:(1+bp)]
-  pis = params[(2+bp):(1+bp+bq)]
+  pis = params2[(2+bp):(1+bp+bq)]
   # find epsilons by solving a=Be for eps
   a = numeric(n)
   B = diag(n)
@@ -293,13 +293,13 @@ fitted_acc <- function(x, y, bp, bq, rp, rq, best_params){
   fbx = numeric(h)
   for (i in 1:h){
     N = length(x_curr)
-    fbx[i] = sum(phis*x_curr[(N-1):(N-bp)]) + sum(pis*e_curr[(N-1):(N-nq)])
+    fbx[i] = sum(phis*x_curr[(N-1):(N-bp)]) + sum(pis*e_curr[(N-1):(N-bq)])
     x_curr = c(x_curr,fbx[i])
     e_curr = c(e_curr, 0)
   }
   
   trmse_auto_x  = sqrt(sum((y-fax$mean)^2  ) / length(y))
-  trmse_bayes_x  = sqrt(sum((y-fbx$mean)^2  ) / length(y))
+  trmse_bayes_x  = sqrt(sum((y-fbx)^2  ) / length(y))
   return(c(rmse_auto_x, rmse_bayes_x, trmse_auto_x, trmse_bayes_x))
 }
 
